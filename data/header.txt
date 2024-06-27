@@ -1,0 +1,1 @@
+Gene,Variation,CS,error_rate,dataset,AF2_pLDDT,AF2_SASA,PDB_SASA
