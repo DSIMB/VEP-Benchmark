@@ -19,12 +19,14 @@ To retrieve predictions, you will need to download them from Zenodo:
 
 Two Conda environments are required:
 1. **Main Environment**: Set up using the `environment.yml` file:
-2. 
+   
 ```bash
 conda env create -f environment.yml
 conda activate VEP
 ```
+
 2. **Secondary Environment**: Use this environment specifically for retrieving predictions from PhD-SNPg, as it requires Python 2 compatibility:
+   
 ```bash
 conda env create -f environment.yml
 conda activate VEP
