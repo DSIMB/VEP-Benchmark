@@ -8,16 +8,23 @@ Data description
 Provided pipeline allows you to retrieve 65 predictions from Variant Effect Predictors (VEPs) by using dbNSFP database, precomputed predictions or scripts provided by authors for concerned VEPs.
 
 ### Requirements
-1. Databases
-In order to retrieve predictions, you will need to download those from Zenodo:
-* Link Zenodo
-* Storage Required: Approximately X GB of disk space is needed for the download.
-  
-3. Conda environments
-One main conda environment is required to run almost everything, and a second conda environment is required to retrieve predictions from PhD-SNPg as authors have provided scripts using python2, which is not compatible with others main dependencies.
 
-To set up the main conda environment, use the `environment.yml` file:
+#### Databases
 
+To retrieve predictions, you will need to download them from Zenodo:
+- **Download Link**: [Zenodo Database](https://zenodo.org/your-download-link)
+- **Storage Required**: Approximately X GB of disk space is needed for the download.
+
+#### Conda Environments
+
+Two Conda environments are required:
+1. **Main Environment**: Set up using the `environment.yml` file:
+2. 
+```bash
+conda env create -f environment.yml
+conda activate VEP
+```
+2. **Secondary Environment**: Use this environment specifically for retrieving predictions from PhD-SNPg, as it requires Python 2 compatibility:
 ```bash
 conda env create -f environment.yml
 conda activate VEP
@@ -76,9 +83,9 @@ bash ../scripts/all_pipeline_light.sh -f file.tsv -m ganno -g 37
 ```
 
 
-The pipeline will generate two main folder:
-* input_files: Containing all input files necessarily to properly extract predictions 
-* predictions: Each folder contain one file with all predictions for the specific VEP. Note that the folder dbNSFP 
+The pipeline will generate two main folders:
+- **input_files**: Contains all input files necessary to properly extract predictions.
+- **predictions**: Each subfolder corresponds to a specific VEP and contains prediction files.
 ```bash
 .
 ├── input_files
