@@ -44,7 +44,7 @@ conda activate VEP
 
 ### Usage
 
-#### panno mode
+* panno mode
 If your input file resembles the following format
 
 ```bash
@@ -65,7 +65,7 @@ Then you want to use the **panno** (protein annotations) mode of the pipeline by
 ```bash
 bash scripts/all_pipeline_light.sh -f variant_file.tsv -m panno -g 38
 ```
-#### ganno mode
+* ganno mode
 
 Otherwise, if your data are in the following format
 
