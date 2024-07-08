@@ -2,7 +2,37 @@ import pandas as pd
 import numpy as np
 import sys
 import os
-from tqdm import tqdm
+import argparse
+
+
+def get_args():
+    parser = argparse.ArgumentParser(description='Generating input files needed to retrieve predictions from Variant Effect Predictors')
+    parser.add_argument('-f', '--file',
+                        help="Path to file containing genomic positions",
+                        required=True, type=str)
+    # Faire + simple
+    parser.add_argument('-int', '--intermediate_folder',
+                        help="Path to directory containing all dbNSFP files",
+                        required=True, type=str)
+    parser.add_argument('-df', '--dbnsfp_file',
+                        help="Path to file to create",
+                        default="./predictions/dbNSFP/dbNSFP_output.tsv",
+                        required=False, type=str)
+    parser.add_argument('-o', '--output_file',
+                        help="Choose the reference genome to consider between 38 and 37 (default:38)",
+                        default="./predictions/dbNSFP/dbNSFP_output_clean.tsv",
+                        required=False, type=str)
+    parser.add_argument('-inp', '--input_folder',
+                        help="Path to directory containing all dbNSFP files",
+                        default="./input_files",
+                        required=False, type=str)
+    
+    args = parser.parse_args()
+    variant_file = args.file
+    if not os.path.exists(variant_file):
+        sys.exit(f"[dbNSFP] Variant file '{variant_file}' does not exists. Please provide an existing one.")
+    return args
+
 
 def get_correct_index(line, dict_fasta, dict_variation):
     df_gene = pd.DataFrame((line["genename"].split(";"))).value_counts()
@@ -24,12 +54,6 @@ def get_correct_index(line, dict_fasta, dict_variation):
                         true_residue = sequence[position - 1]
                         if true_residue == aaref:
                             correct_index.append(i)
-    else:
-        print("Gene not in uniprot : ", gene)
-    if len(correct_index) == 0:
-        print("Mismatch uniprot position", gene, pos_field, aaref, aaalt)
-    if "RERE" in gene:
-        print(line, correct_index, gene, pos_field, aaref, aaalt)
     return correct_index
 
 
@@ -71,8 +95,6 @@ def clean_line(line, dict_fasta, dict_variation):
             new_line.append(items[0])
         else:
             new_line.append(field)
-    if "RERE" in line["genename"]:
-        print(new_line)
     return np.array(new_line)
 
 
@@ -123,27 +145,21 @@ def get_list_genes(line):
 
 
 if __name__ == "__main__":
-    header_file = "/dsimb/glaciere/radjasan/dbNSFP/academic/header.txt"
-    final_header_file = "/dsimb/glaciere/radjasan/dbNSFP/academic/final_header.txt"
-    final_header_modified_file = "/dsimb/glaciere/radjasan/dbNSFP/academic/final_header_modified.txt"
+    args = get_args()
+    print("[dbNSFP] Cleaning dbNSFP outputs...")
+    intermediate_folder = args.intermediate_folder
+    gene_var_file = args.file
+    dbnsfp_file = args.dbnsfp_file
+    clean_dbnsfp_file_output = args.output_file
+    input_folder = args.input_folder
+
+
+    header_file = f"{intermediate_folder}/header.txt"
+    final_header_file = f"{intermediate_folder}/final_header.txt"
+    final_header_modified_file = f"{intermediate_folder}/final_header_modified.txt"
 
     header_GR38 = ["#chr", "pos(1-based)", "ref", "alt"]
     header_GR37 = ["#chr", "hg19_pos(1-based)", "ref", "alt"]
-
-    if len(sys.argv) != 5:
-        sys.exit("Invalid arguments")
-
-    gene_var_file = sys.argv[1]
-    dbnsfp_file = sys.argv[2]
-    clean_dbnsfp_file_output = sys.argv[3]
-    input_folder = sys.argv[4]
-
-    output_folder = os.path.dirname(clean_dbnsfp_file_output)
-    if not output_folder:
-        output_folder = "./"
-    # gene_var_file = "/dsimb/wasabi/radjasan/these/PROJECTS/ALINE/data/missing_variants/missing_variants.tsv"
-    # dbnsfp_file = "/dsimb/wasabi/radjasan/these/PROJECTS/ALINE/data/missing_variants/dbNSFP_output.txt"
-    # clean_dbnsfp_file_output = "/dsimb/wasabi/radjasan/these/PROJECTS/ALINE/data/missing_variants/clean_dbNSFP_output.txt"
 
     with open(header_file) as f1, open(final_header_file) as f2, open(final_header_modified_file) as f3:
         header = f1.readline().split("\t")
@@ -164,12 +180,9 @@ if __name__ == "__main__":
     final_dbnsfp.columns = ["Gene"] + final_header_modified[1:]
     variation = final_dbnsfp["aaref"].values + final_dbnsfp["aapos"].values + final_dbnsfp["aaalt"].values
     final_dbnsfp["Variation"] = variation
-    #final_dbnsfp.to_csv(clean_dbnsfp_file_output, sep="\t", index=False)
-    #sys.exit()
     final_dbnsfp = final_dbnsfp.replace("nan", np.NaN)
     final_dbnsfp.reset_index(drop=True, inplace=True)
     final_dbnsfp["NA"] = final_dbnsfp.isna().sum(axis = 1)
-    print(final_dbnsfp.groupby(["Gene","Variation"])["NA"].idxmin().values)
     clean_data = final_dbnsfp.iloc[final_dbnsfp.groupby(["Gene","Variation"])["NA"].idxmin().values]
        
     clean_data.drop("NA", axis=1).to_csv(clean_dbnsfp_file_output, sep="\t", index=False)
@@ -180,3 +193,5 @@ if __name__ == "__main__":
     clean_data[header_GR37 + ["Gene", "Variation"]].to_csv(f"{input_folder}/dbnsfp_genomic_position_GR37_gene_var.tsv", sep="\t", header=False, index=False)
     clean_data[header_GR37].to_csv(f"{input_folder}/dbnsfp_genomic_position_GR37.tsv", sep="\t", header=False, index=False)
     
+    print("[dbNSFP] Cleaning done")
+    print(f"[dbNSFP] Genomic positions from dbNSFP output have been saved in both GR38 and GR37 reference genome in folder '{input_folder}'")
