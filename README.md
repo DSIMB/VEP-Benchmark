@@ -12,9 +12,11 @@ Provided pipeline allows you to retrieve 65 predictions from Variant Effect Pred
 #### Databases
 
 To retrieve predictions, you will need to download each databases required by running the script `download_databases.sh`:
+
 ```bash
 bash scripts/download_databases.sh
 ```
+
 - This will download precomputed predictions for: AlphaMissense, CAPICE, CPT, DeepSAV, Envision, EVE, InMeRF, LASSIE, MISTIC, UNEECON, VARITY, VESPA and dbNSFP4.4a.
 - The dbNSFP4.4a database contains precomputed predictions for: SIFT, SIFT4G, Polyphen2_HDIV, Polyphen2_HVAR, LRT, MutationTaster, MutationAssessor, FATHMM, PROVEAN, VEST4, MetaSVM, MetaLR, MetaRNN, M-CAP, REVEL, MutPred, MVP, gMVP, MPC, PrimateAI, DEOGEN2, BayesDel_addAF, BayesDel_noAF, ClinPred, LIST-S2, VARITY_R, VARITY_ER, VARITY_R_LOO, VARITY_ER_LOO, DANN, fathmm-MKL_coding, fathmm-XF_coding, GenoCanyon, integrated_fitCons, GM12878_fitCons, H1-hESC_fitCons, HUVEC_fitCons, CADD, Eigen-raw_coding, Eigen-PC-raw_coding, GERP++, phastCons100way_vertebrate, phastCons470way_mammalian, phastCons17way_primate, SiPhy_29way_logOdds, and bStatistic.
 - Approximately X GB of disk space is needed for the download of databases.
@@ -26,7 +28,7 @@ Two Conda environments are required:
 1. **Main Environment**: Set up using the `environment.yml` file:
    
 ```bash
-conda env create -f environment.yml
+conda env create -f envs/environment.yml
 conda activate VEP
 ```
 
@@ -37,13 +39,12 @@ conda env create -f environment.yml
 conda activate VEP
 ```
 
-### Installation
+---
+
 
 ### Usage
 
-
-#### Input File Format
-##### panno mode
+#### panno mode
 If your input file resembles the following format
 
 ```bash
@@ -64,7 +65,7 @@ Then you want to use the **panno** (protein annotations) mode of the pipeline by
 ```bash
 bash ../scripts/all_pipeline_light.sh -f file.tsv -m panno -g 38
 ```
-##### ganno mode
+#### ganno mode
 
 Otherwise, if your data are in the following format
 
