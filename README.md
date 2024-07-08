@@ -45,6 +45,7 @@ conda activate VEP
 ### Usage
 
 * panno mode
+  
 If your input file resembles the following format
 
 ```bash
