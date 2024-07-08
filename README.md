@@ -17,8 +17,8 @@ bash scripts/download_databases.sh
 ```
 - This will download precomputed predictions for: AlphaMissense, CAPICE, CPT, DeepSAV, Envision, EVE, InMeRF, LASSIE, MISTIC, UNEECON, VARITY, VESPA and dbNSFP4.4a.
 - The dbNSFP4.4a database contains precomputed predictions for: SIFT, SIFT4G, Polyphen2_HDIV, Polyphen2_HVAR, LRT, MutationTaster, MutationAssessor, FATHMM, PROVEAN, VEST4, MetaSVM, MetaLR, MetaRNN, M-CAP, REVEL, MutPred, MVP, gMVP, MPC, PrimateAI, DEOGEN2, BayesDel_addAF, BayesDel_noAF, ClinPred, LIST-S2, VARITY_R, VARITY_ER, VARITY_R_LOO, VARITY_ER_LOO, DANN, fathmm-MKL_coding, fathmm-XF_coding, GenoCanyon, integrated_fitCons, GM12878_fitCons, H1-hESC_fitCons, HUVEC_fitCons, CADD, Eigen-raw_coding, Eigen-PC-raw_coding, GERP++, phastCons100way_vertebrate, phastCons470way_mammalian, phastCons17way_primate, SiPhy_29way_logOdds, and bStatistic.
-- Aroximately X GB of disk space is needed for the download.
-- 
+- Approximately X GB of disk space is needed for the download of databases.
+- Some databases support indexing (database with genomic position), this is handled within the script. This index will speed up the retrieving of predictions.
 
 #### Conda Environments
 
