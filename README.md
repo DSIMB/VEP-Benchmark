@@ -15,10 +15,10 @@ To retrieve predictions, you will need to download each databases required by ru
 ```bash
 bash scripts/download_databases.sh
 ```
-
-
-- **Download Link**: [Zenodo Database](https://zenodo.org/your-download-link)
+- This will download precomputed predictions for: AlphaMissense, CAPICE, CPT, DeepSAV, Envision, EVE, InMeRF, LASSIE, MISTIC, UNEECON, VARITY, VESPA and dbNSFP4.4a.
+- The dbNSFP4.4a database contains precomputed predictions for: 
 - **Storage Required**: Approximately X GB of disk space is needed for the download.
+- 
 
 #### Conda Environments
 
