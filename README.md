@@ -11,7 +11,12 @@ Provided pipeline allows you to retrieve 65 predictions from Variant Effect Pred
 
 #### Databases
 
-To retrieve predictions, you will need to download them from Zenodo:
+To retrieve predictions, you will need to download each databases required by running the script `download_databases.sh`:
+```bash
+bash scripts/download_databases.sh
+```
+
+
 - **Download Link**: [Zenodo Database](https://zenodo.org/your-download-link)
 - **Storage Required**: Approximately X GB of disk space is needed for the download.
 
