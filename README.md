@@ -63,7 +63,7 @@ SDHB    S163P   Benign
 Then you want to use the **panno** (protein annotations) mode of the pipeline by running 
 
 ```bash
-bash ../scripts/all_pipeline_light.sh -f file.tsv -m panno -g 38
+bash scripts/all_pipeline_light.sh -f variant_file.tsv -m panno -g 38
 ```
 #### ganno mode
 
@@ -84,12 +84,12 @@ Otherwise, if your data are in the following format
 Then you want to use the **ganno** (genomic annotations) mode of the pipeline by running 
 
 ```bash
-bash ../scripts/all_pipeline_light.sh -f file.tsv -m ganno -g 38
+bash scripts/all_pipeline_light.sh -f variant_file.tsv -m ganno -g 38
 ```
 If genomic position are from GR37 reference genome, use instead
 ```bash
 
-bash ../scripts/all_pipeline_light.sh -f file.tsv -m ganno -g 37
+bash scripts/all_pipeline_light.sh -f variant_file.tsv -m ganno -g 37
 ```
 
 
@@ -123,3 +123,10 @@ The pipeline will generate two main folders:
     ├── VARITY
     └── VESPA
 ```
+
+
+### Suggestions
+If you have any suggestions on optimizing the pipeline or if you want us to add some databases, please reach us by posting on github or send a mail to radja.ragou@gmail.com.
+
+### Reference
+paper
