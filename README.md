@@ -127,7 +127,7 @@ The pipeline will generate two main folders:
 
 
 ### Suggestions
-If you have any suggestions on optimizing the pipeline or if you want us to add some databases, please reach us by posting on github or send a mail to radja.ragou@gmail.com.
+If you have suggestions for optimizing the pipeline or would like us to add additional databases, please reach out to us by posting on GitHub or sending an email to radja.ragou@gmail.com.
 
 ### Reference
 paper
