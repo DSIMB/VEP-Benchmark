@@ -41,6 +41,11 @@ conda activate VEP
 
 ---
 
+#### Tabix
+Tabix is used to create index files for large database of genomic positions, which significantly speed up data retrieving. It must be installed using `apt-get install`:
+```bash
+ sudo apt-get install tabix
+```
 
 ### Usage
 
