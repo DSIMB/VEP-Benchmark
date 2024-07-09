@@ -6,6 +6,7 @@ database_folder="/home/wasabi/radjasan/variant_databases"
 mkdir -p $database_folder/AlphaMissense
 wget https://storage.cloud.google.com/dm_alphamissense/AlphaMissense_hg38.tsv.gz -P $database_folder/AlphaMissense/
 zcat $database_folder/AlphaMissense/AlphaMissense_hg38.tsv.gz | sort -k1,1 -k2,2n > $database_folder/AlphaMissense/AlphaMissense_hg38.tsv
+rm $database_folder/AlphaMissense/AlphaMissense_hg38.tsv.gz
 bgzip $database_folder/AlphaMissense/AlphaMissense_hg38.tsv
 tabix -p vcf -s 1 -b 2 -e 2 $database_folder/AlphaMissense/AlphaMissense_hg38.tsv.gz
 
@@ -35,6 +36,7 @@ unzip $database_folder/EVE/eve_bulk_download.zip -d $database_folder/EVE
 mkdir -p $database_folder/InMeRF
 wget https://www.med.nagoya-u.ac.jp/neurogenetics/InMeRF/download/InMeRF_score_hg38.txt.gz -P $database_folder/InMeRF
 zcat $database_folder/InMeRF/InMeRF_score_hg38.txt.gz | sort -k1,1 -k2,2n > $database_folder/InMeRF/InMeRF_score_hg38.txt
+rm $database_folder/InMeRF/InMeRF_score_hg38.txt.gz
 bgzip $database_folder/InMeRF/InMeRF_score_hg38.txt
 tabix -p vcf -s 1 -b 2 -e 2 $database_folder/InMeRF/InMeRF_score_hg38.txt.gz
 
@@ -47,6 +49,7 @@ wget http://compgen.cshl.edu/LASSIE/data/LASSIE_fitness_effect_hg19.tsv.gz.tbi -
 mkdir -p $database_folder/MISTIC
 wget https://lbgi.fr/mistic/static/data/MISTIC_GRCh38.tsv.gz -P $database_folder/MISTIC
 zcat $database_folder/MISTIC/MISTIC_GRCh38.tsv.gz | sort -k1,1 -k2,2n > $database_folder/MISTIC/MISTIC_GRCh38.tsv
+rm $database_folder/MISTIC/MISTIC_GRCh38.tsv.gz
 bgzip $database_folder/MISTIC/MISTIC_GRCh38.tsv
 tabix -p vcf -s 1 -b 2 -e 2 $database_folder/MISTIC/MISTIC_GRCh38.tsv.gz
 
@@ -55,6 +58,7 @@ mkdir -p $database_folder/MutFormer
 wget http://www.openbioinformatics.org/mutformer/hg19_MutFormer.zip -P $database_folder/MutFormer
 unzip $database_folder/MutFormer/hg19_MutFormer.zip -d $database_folder/MutFormer
 zcat $database_folder/MutFormer/hg19_MutFormer.tsv.gz | sort -k1,1 -k2,2n > $database_folder/MutFormer/hg19_MutFormer_sorted.tsv
+rm $database_folder/MutFormer/hg19_MutFormer_sorted.tsv.gz
 bgzip $database_folder/MutFormer/hg19_MutFormer_sorted.tsv
 tabix -p vcf -s 1 -b 2 -e 2 $database_folder/MutFormer/hg19_MutFormer_sorted.tsv.gz
 
@@ -62,6 +66,7 @@ tabix -p vcf -s 1 -b 2 -e 2 $database_folder/MutFormer/hg19_MutFormer_sorted.tsv
 mkdir -p $database_folder/MutScore
 wget https://storage.googleapis.com/rivolta_mutscore/mutscore-v1.0-hg38.tsv.gz -P $database_folder/MutScore
 zcat $database_folder/MutScore/mutscore-v1.0-hg38.tsv.gz | sort -k1,1 -k2,2n > $database_folder/MutScore/mutscore-v1.0-hg38_sorted.tsv
+rm $database_folder/MutScore/mutscore-v1.0-hg38_sorted.tsv.gz
 bgzip $database_folder/MutScore/mutscore-v1.0-hg38_sorted.tsv
 tabix -p vcf -s 1 -b 2 -e 2 $database_folder/MutScore/mutscore-v1.0-hg38_sorted.tsv.gz
 
@@ -75,6 +80,7 @@ mkdir -p $database_folder/PONP2
 mkdir -p $database_folder/SIGMA
 wget https://sigma-pred.org/api/sigma/download?name=sigma_scores -O $database_folder/SIGMA/sigma_scores.txt
 zcat $database_folder/SIGMA/sigma_scores.txt | sort -k1,1 -k2,2n > $database_folder/SIGMA/sigma_scores_sorted.txt
+rm $database_folder/SIGMA/sigma_scores_sorted.txt.gz
 bgzip $database_folder/SIGMA/sigma_scores_sorted.txt
 tabix -p vcf -s 1 -b 2 -e 2 $database_folder/SIGMA/sigma_scores_sorted.txt.gz
 
@@ -91,6 +97,6 @@ mkdir -p $database_folder/VESPA
 wget https://zenodo.org/records/5905863/files/vespal_human_proteome.zip?download=1 -P $database_folder/VESPA
 
 # dbNSFP4.4a
-mkdir dbNSFP
-wget https://dbnsfp.s3.amazonaws.com/dbNSFP4.4a.zip -P $database_folder/dbNSFP
+mkdir $database_folder/dbNSFP
+wget https://usf.box.com/shared/static/bvfzmkpgtphvbmmrvb2iyl2jl21o49kc -P $database_folder/dbNSFP
 gunzip $database_folder/dbNSFP/dbNSFP4.4a.zip
