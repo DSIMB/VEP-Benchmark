@@ -1,6 +1,6 @@
 #!/bin/bash
 
-database_folder="/home/wasabi/radjasan/variant_databases"
+database_folder="./variant_databases"
 
 # AlphaMissense (to index)
 mkdir -p $database_folder/AlphaMissense
