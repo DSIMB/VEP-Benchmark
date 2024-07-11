@@ -1,6 +1,7 @@
 #!/bin/bash
 
 database_folder="./variant_databases"
+transvar_folder="./transvar"
 
 # AlphaMissense (to index)
 mkdir -p $database_folder/AlphaMissense
@@ -98,5 +99,23 @@ wget https://zenodo.org/records/5905863/files/vespal_human_proteome.zip?download
 
 # dbNSFP4.4a
 mkdir $database_folder/dbNSFP
-wget https://usf.box.com/shared/static/bvfzmkpgtphvbmmrvb2iyl2jl21o49kc -P $database_folder/dbNSFP
-gunzip $database_folder/dbNSFP/dbNSFP4.4a.zip
+wget https://usf.box.com/shared/static/bvfzmkpgtphvbmmrvb2iyl2jl21o49kc -O $database_folder/dbNSFP/dbNSFP4.4a.zip
+unzip $database_folder/dbNSFP/dbNSFP4.4a.zip
+rm $database_folder/dbNSFP/dbNSFP4.4a.zip
+for chrom in {1..22} X Y; 
+do 
+    echo "Indexing chromosome $chrom...";
+    zcat $database_folder/dbNSFP/dbNSFP4.4a_variant.chr${chrom}.gz  | sort -k1,1 -k2,2n > $database_folder/dbNSFP/dbNSFP4.4a_variant.chr${chrom}
+    rm $database_folder/dbNSFP/dbNSFP4.4a_variant.chr${chrom}.gz
+    bgzip $database_folder/dbNSFP/dbNSFP4.4a_variant.chr${chrom}
+    tabix -p vcf -s 1 -b 2 -e 2 $database_folder/dbNSFP/dbNSFP4.4a_variant.chr${chrom}.gz
+done 
+
+# Reference genome hg38
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz -P $transvar_folder/hg38
+gunzip $transvar_folder/hg38/hg38.fa.gz
+
+# Reference genome hg19
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz -P $transvar_folder/hg19
+gunzip $transvar_folder/hg19/hg19.fa.gz
+
