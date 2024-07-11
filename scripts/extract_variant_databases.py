@@ -148,8 +148,6 @@ def read_idvar_databases(database, dict_search_pattern, database_file, predictio
             var = items[1]
             if database == "Envision":
                 string = items[1]
-            elif database == "AlphaMissense":
-                string = f"{ID}_{var}"
             elif database == "DeepSAV":
                 var = f"{items[2]}{items[1]}{items[3]}"
                 string = f"{ID}_{var}"
@@ -159,9 +157,7 @@ def read_idvar_databases(database, dict_search_pattern, database_file, predictio
                 string = items[0]
 
             if string in dict_search_pattern:
-                if database == "AlphaMissense":
-                    new_line = f"{ID}\t{var}\t{items[2]}\n"
-                elif database == "Envision":
+                if database == "Envision":
                     new_line = f"{items[5]}\t{items[7]}\t{items[-1]}\n"
                 elif database == "DeepSAV":
                     new_line = f"{ID}\t{var}\t{items[4]}\n"
