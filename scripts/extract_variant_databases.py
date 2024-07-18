@@ -5,6 +5,7 @@ from joblib import Parallel, delayed
 import h5py
 import argparse
 import pysam
+import sys
 
 
 def get_args():
@@ -202,6 +203,9 @@ def run_one_db(predictions_directory, database, dict_databases, database_directo
     os.makedirs(f"{predictions_directory}/{database}", exist_ok=True)
         
     input_file, database_file = dict_databases[database]
+    if database_file:
+        if not os.path.exists(database_file):
+            return
     print(f"[precomputed_VEP] Extracting {database} predictions...")
     if database in ["EVE", "CPT"]:
         dict_search_pattern = pattern_evecpt(input_file, database)
@@ -229,10 +233,10 @@ if __name__ == "__main__":
     CPT_data = f"{database_directory}/CPT/proteome/"
     EVE_data = f"{database_directory}/EVE/variant_files/"
     Envision_data = f"{database_directory}/Envision/Envision_clean.csv.gz"
-    DeepSAV_data =  f"{database_directory}/DeepSAV/DeepSAV_predictions.txt.gz"
+    DeepSAV_data =  f"{database_directory}/DeepSAV/humanSAV.txt.gz"
     PONP2_data =  f"{database_directory}/PONP2/ponp_predicion_combined_2.txt.gz"
     AM_data = f"{database_directory}/AlphaMissense/AlphaMissense_hg38.tsv.gz"
-    MutScore_data =  f"{database_directory}/MutScore/mutscore-v1.0-hg38.tsv.gz"
+    MutScore_data =  f"{database_directory}/MutScore/mutscore-v1.0-hg38_sorted.tsv.gz"
     SIGMA_data =  f"{database_directory}/SIGMA/sigma_scores.sorted.tsv.gz"
     LASSIE_data =  f"{database_directory}/LASSIE/LASSIE_fitness_effect_hg19.tsv.gz"
     UNEECON_data =  f"{database_directory}/UNEECON/UNEECON_variant_score_v1.0_hg19.tsv.gz"
@@ -260,7 +264,7 @@ if __name__ == "__main__":
                       "Envision":[id_var_under_input, Envision_data],
                       "DeepSAV":[id_var_under_input, DeepSAV_data],
                       "PONP2":[id_var_under_input, PONP2_data],
-                      "AlphaMissense":[GR38_positions_input, AM_data], 
+                    #   "AlphaMissense":[GR38_positions_input, AM_data], 
                       "MutScore":[GR38_positions_input, MutScore_data],
                       "SIGMA":[GR38_positions_input, SIGMA_data],
                       "LASSIE":[GR37_positions_input, LASSIE_data],
@@ -274,8 +278,9 @@ if __name__ == "__main__":
     list_databases = dict_databases.keys()
     
     # list_databases = ["AlphaMissense"]
+
     s = time.time()
-    Parallel(n_jobs = len(list_databases),
+    Parallel(n_jobs = 1,
             prefer="processes")(delayed(run_one_db)(predictions_directory,
                                                     database,
                                                     dict_databases,
