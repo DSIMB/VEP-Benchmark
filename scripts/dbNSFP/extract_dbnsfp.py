@@ -22,6 +22,12 @@ def get_args():
                         help="Path to directory containing all dbNSFP files",
                         default="/dsimb/glaciere/radjasan/dbNSFP/academic/",
                         required=False, type=str)
+    
+    parser.add_argument('-v', '--dbnsfp_version',
+                        help="Path to directory containing all dbNSFP files",
+                        default=4.7,
+                        required=False, type=float)
+    
     args = parser.parse_args()
 
     variant_file = args.file
@@ -47,15 +53,15 @@ def process_one_chr(chromosome, args):
     output_file = args.output_file
     reference_genome = args.reference
     path_data = args.data_path
-
+    dbnsfp_version = args.dbnsfp_version
     fulloutput_file = f"{output_file}.chr{chromosome}"
 
-    chr_file = f"{path_data}/dbNSFP4.4a_variant.chr{chromosome}.gz"
+    chr_file = f"{path_data}/dbNSFP{dbnsfp_version}a_variant.chr{chromosome}.gz"
     
     if reference_genome == "38":
-        index_file = f"{path_data}/tabix_38/dbNSFP4.4a_variant.chr{chromosome}.gz.tbi"
+        index_file = f"{path_data}/tabix_38/dbNSFP{dbnsfp_version}a_variant.chr{chromosome}.gz.tbi"
     else:
-        index_file = f"{path_data}/tabix_37/dbNSFP4.4a_variant.chr{chromosome}.gz.tbi"
+        index_file = f"{path_data}/tabix_37/dbNSFP{dbnsfp_version}a_variant.chr{chromosome}.gz.tbi"
 
     print(index_file, fulloutput_file)
     tabix_file = pysam.TabixFile(chr_file, index=index_file, encoding="utf8")
