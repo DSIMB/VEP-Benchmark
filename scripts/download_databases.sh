@@ -1,4 +1,5 @@
 #!/bin/bash
+# improve oneline bgzip
 
 database_folder="./variant_databases"
 transvar_folder="./transvar"
@@ -108,6 +109,9 @@ unzip $database_folder/VESPA/vespal_human_proteome.zip -d $database_folder/VESPA
 
 # dbNSFP4.7a
 mkdir $database_folder/dbNSFP
+mkdir $database_folder/dbNSFP/tabix_38
+mkdir $database_folder/dbNSFP/tabix_19
+
 wget "https://usf.box.com/shared/static/nqgw17r4zzuluk5ginqm33hhopiak26c" -O $database_folder/dbNSFP/dbNSFP4.7a.zip
 unzip $database_folder/dbNSFP/dbNSFP4.7a.zip -d $database_folder/dbNSFP/
 # rm $database_folder/dbNSFP/dbNSFP4.7a.zip
@@ -118,6 +122,10 @@ do
     rm $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz
     bgzip $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}
     tabix -p vcf -s 1 -b 2 -e 2 $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz
+    mv $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz.tbi $database_folder/dbNSFP/tabix_38
+    tabix -p vcf -s 1 -b 9 -e 9 $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz
+    mv $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz.tbi $database_folder/dbNSFP/tabix_19
+
 done 
 
 # Reference genome hg38
