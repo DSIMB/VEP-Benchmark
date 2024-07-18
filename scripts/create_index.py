@@ -1,15 +1,21 @@
 import gzip
 import sys
+import argparse
 
-def create_protein_index(data_file, index_file, database):
+def get_args():
+    parser = argparse.ArgumentParser(description='Generating input files needed to retrieve predictions from Variant Effect Predictors')
+    parser.add_argument('-f', '--file',
+                        help="Path to file containing genomic positions",
+                        required=True, type=str)
+    parser.add_argument('-i', '--index',
+                        help="Path to file containing genomic positions",
+                        required=True, type=int)
+    args = parser.parse_args()
+    return args
+
+
+def create_protein_index(data_file, index_file, index_protein_id):
     done = {}
-    if database == "Envision":
-        index_protein_id = 5
-    elif database == "DeepSAV":
-        index_protein_id = 0
-    elif database == "PONP2":
-        index_protein_id = -1
-                
     with gzip.open(data_file, 'rt') as f, open(index_file, 'w') as idx:
         current_position = 0
         for line in f:
@@ -24,9 +30,9 @@ def create_protein_index(data_file, index_file, database):
                 done[protein_id] = 0
             current_position += len(line.encode('utf-8'))
 
-
 if __name__ == "__main__":
-    DB_file = sys.argv[1]
-    output_file = sys.argv[2]
-    database_name = sys.argv[3]
-    create_protein_index(DB_file, output_file, database_name)
+    args = get_args()
+    DB_file = args.file
+    column_index = args.index
+    output_file = f"{DB_file}.tbi"
+    create_protein_index(DB_file, output_file, column_index)
