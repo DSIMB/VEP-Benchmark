@@ -8,10 +8,10 @@ dependencies:
   - h5py=3.11
   - pandas=2.2.2
   - numpy=1.26.4
-  - pip
-  - pip:
-      - fair-esm
-      - pysam==0.22.1
-      - transvar
-      - bgzip
+  # - pip
+  # - pip:
+  #     - fair-esm
+  #     - pysam==0.22.1
+  #     - transvar
+  #     - bgzip
 
