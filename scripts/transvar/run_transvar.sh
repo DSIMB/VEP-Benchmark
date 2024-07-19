@@ -2,7 +2,8 @@ variant_input_file=$1
 output_folder=$2
 mode=$3
 GR=$4
-script_folder="/home/wasabi/radjasan/git/BenchVEP/scripts/"
+script_folder=$5
+
 mkdir -p $output_folder
 
 if [ "$mode" == "ganno" ]; then
