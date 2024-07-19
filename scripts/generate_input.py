@@ -19,9 +19,9 @@ def get_args():
                         help="Directory in which 'input_files' and 'predictions' folders will be created",
                         default=".",
                         required=False, type=str)
-    parser.add_argument('-fa', '--fasta_file',
+    parser.add_argument('--fasta_file',
                         help="Path to multi-fasta file from UniProt",
-                        default="/home/wasabi/radjasan/these/benchmark/Uniprot/uniprot-compressed_true_download_true_format_fasta_query__28_2A_29_2-2023.03.28-13.08.10.56.fasta",
+                        default="./uniprot/uniprot-compressed_true_download_true_format_fasta_query__28_2A_29_2-2023.03.28-13.08.10.56.fasta",
                         required=False, type=str)
     args = parser.parse_args()
 
