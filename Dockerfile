@@ -31,6 +31,7 @@ RUN echo $(ls -1 /BenchVEP)
 
 # # Copy the dependencies file to the working directory
 COPY transvar transvar
+ARG CACHEBUST=1
 COPY scripts scripts
 COPY envs envs
 COPY time_check time_check
