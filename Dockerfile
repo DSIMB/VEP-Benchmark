@@ -50,9 +50,6 @@ SHELL ["conda", "run", "-n", "VEP", "/bin/bash", "-c"]
 # # Install databases
 RUN bash scripts/download_databases.sh
 
-RUN bash initialize_transvar.sh
-
-
 # ARG CACHEBUST=1
 # RUN echo $(ls -1 /BenchVEP)
 
@@ -60,5 +57,5 @@ RUN bash initialize_transvar.sh
 RUN chmod +x scripts/all_pipeline_light.sh
 
 # # Command to run on container start
-ENTRYPOINT ["conda", "run", "-n", "VEP", "bash", "scripts/all_pipeline_light.sh"]
+ENTRYPOINT ["conda", "run", "-n", "VEP", "/bin/bash scripts/all_pipeline_light.sh"]
 
