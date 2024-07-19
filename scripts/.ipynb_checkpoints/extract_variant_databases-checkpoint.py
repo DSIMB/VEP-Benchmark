@@ -1,6 +1,4 @@
-import sys
 import gzip
-from tqdm import tqdm
 import os
 import time
 from joblib import Parallel, delayed
@@ -53,23 +51,14 @@ def pattern_evecpt(file, database):
 
 
 def read_evecpt(database, dict_search_pattern, database_directory, predictions_directory):
-    if database == "EVE":
-        ext = ""
-        mode = "r"
-        open_fun = open
-    else:
-        ext = ".gz"
-        mode = "rt"
-        open_fun = gzip.open
-
     output_file = f"{predictions_directory}/{database}/{database}_predictions.tsv"
     if os.path.exists(output_file):
         os.remove(output_file)
     for entry in dict_search_pattern:
-        file_predictions = f"{database_directory}/{database}/{entry}.csv{ext}"
+        file_predictions = f"{database_directory}/{database}/{entry}.csv.gz"
         if not os.path.exists(file_predictions):
             continue
-        with open_fun(file_predictions, mode, encoding='utf-8') as db_file, open(output_file, "a") as fout:
+        with gzip.open(file_predictions, "rt", encoding='utf-8') as db_file, open(output_file, "a") as fout:
             for line in db_file:
                 items = line.split(",")
                 if database == "EVE":
@@ -118,7 +107,6 @@ def read_esm1b(id_var_file, database_directory, predictions_directory):
             items_input = line_input.split()
             ID = items_input[0]
             var = items_input[1]
-            res_wt = var[0]
             res_mut = var[-1]
             res_pos = int(var[1:-1])
 
@@ -160,8 +148,6 @@ def read_idvar_databases(database, dict_search_pattern, database_file, predictio
             var = items[1]
             if database == "Envision":
                 string = items[1]
-            elif database in ["AlphaMissense", "VARITY"]:
-                string = f"{ID}_{var}"
             elif database == "DeepSAV":
                 var = f"{items[2]}{items[1]}{items[3]}"
                 string = f"{ID}_{var}"
@@ -171,16 +157,12 @@ def read_idvar_databases(database, dict_search_pattern, database_file, predictio
                 string = items[0]
 
             if string in dict_search_pattern:
-                if database == "AlphaMissense":
-                    new_line = f"{ID}\t{var}\t{items[2]}\n"
-                elif database == "Envision":
+                if database == "Envision":
                     new_line = f"{items[5]}\t{items[7]}\t{items[-1]}\n"
                 elif database == "DeepSAV":
                     new_line = f"{ID}\t{var}\t{items[4]}\n"
                 elif database == "PONP2":
                     new_line = f"{ID}\t{var}\t{items[3]}\n"
-                elif database == "VARITY":
-                    new_line = line
                 fout.write(new_line)
                 done += 1
                 if done == N_pattern:
@@ -206,6 +188,11 @@ def read_genomics_databases(input_file, database, database_file, predictions_dir
                 if nuc1 == nuc1_record and nuc2 == nuc2_record:
                     if database == "SIGMA":
                         new_line = f"{chrom_record}\t{pos_record}\t{nuc1_record}\t{nuc2_record}\t{items_record[-2]}\n"
+                    elif database == "AlphaMissense":
+                        uniprot_id = items_record[5]
+                        variation = items_record[7]
+                        AM_score = items_record[8]
+                        new_line = f"{uniprot_id}\t{variation}\t{AM_score}\n"
                     else:
                         new_line = f"{chrom_record}\t{pos_record}\t{nuc1_record}\t{nuc2_record}\t{items_record[4]}\n"
                     fout.write(new_line)
@@ -219,7 +206,7 @@ def run_one_db(predictions_directory, database, dict_databases, database_directo
     if database in ["EVE", "CPT"]:
         dict_search_pattern = pattern_evecpt(input_file, database)
         read_evecpt(database, dict_search_pattern, database_directory, predictions_directory)
-    elif database in ["AlphaMissense","Envision","DeepSAV","PONP2","VARITY"]:
+    elif database in ["Envision","DeepSAV","PONP2"]:
         dict_search_pattern = pattern_hash(input_file)
         read_idvar_databases(database, dict_search_pattern, database_file, predictions_directory)
     elif database == "ESM1b":
@@ -227,7 +214,7 @@ def run_one_db(predictions_directory, database, dict_databases, database_directo
     elif database == "VESPA":
         read_vespa(input_file, database_file, predictions_directory)
     else:
-        read_genomics_databases_tbi(input_file, database, database_file, predictions_directory)
+        read_genomics_databases(input_file, database, database_file, predictions_directory)
     print(f"[precomputed_VEP] {database} done")
 
 if __name__ == "__main__":
@@ -241,16 +228,15 @@ if __name__ == "__main__":
     VESPA_data =  f"{database_directory}/VESPA/vespal_human_proteome.h5"
     CPT_data = f"{database_directory}/CPT/proteome/"
     EVE_data = f"{database_directory}/EVE/variant_files/"
-    AM_data = f"{database_directory}/AlphaMissense/AlphaMissense_aa_substitutions.tsv.gz"
-    Envision_data = f"{database_directory}/Envision/Envision_clean.csv"
+    Envision_data = f"{database_directory}/Envision/Envision_clean.csv.gz"
     DeepSAV_data =  f"{database_directory}/DeepSAV/DeepSAV_predictions.txt.gz"
-    PONP2_data =  f"{database_directory}/PONP2/ponp_predicion_combined_2.txt"
-    VARITY_data =  f"{database_directory}/VARITY/VARITY_data.tsv"
+    PONP2_data =  f"{database_directory}/PONP2/ponp_predicion_combined_2.txt.gz"
+    AM_data = f"{database_directory}/AlphaMissense/AlphaMissense_hg38.tsv.gz"
     MutScore_data =  f"{database_directory}/MutScore/mutscore-v1.0-hg38.tsv.gz"
     SIGMA_data =  f"{database_directory}/SIGMA/sigma_scores.sorted.tsv.gz"
     LASSIE_data =  f"{database_directory}/LASSIE/LASSIE_fitness_effect_hg19.tsv.gz"
     UNEECON_data =  f"{database_directory}/UNEECON/UNEECON_variant_score_v1.0_hg19.tsv.gz"
-    InMeRF_data = f"{database_directory}/InMeRF/InMeRF_hg19_GRCh37.tsv.gz "
+    InMeRF_data = f"{database_directory}/InMeRF/InMeRF_hg19_GRCh37.tsv.gz"
     MISTIC_data = f"{database_directory}/MISTIC/MISTIC_GRCh38.tsv.gz"
     MutFormer_data = f"{database_directory}/MutFormer/hg19_MutFormer.gz"
     CAPICE_data = f"{database_directory}/CAPICE/capice_v1.0_build37_snvs.tsv.gz"
@@ -271,11 +257,10 @@ if __name__ == "__main__":
                       "VESPA":[id_var_tab_input, VESPA_data],
                       "EVE":[uniprot_entry_input, EVE_data],
                       "CPT":[uniprot_entry_input, CPT_data],
-                      "AlphaMissense":[id_var_tab_input, AM_data], 
                       "Envision":[id_var_under_input, Envision_data],
                       "DeepSAV":[id_var_under_input, DeepSAV_data],
                       "PONP2":[id_var_under_input, PONP2_data],
-                      "VARITY":[id_var_tab_input, VARITY_data],
+                      "AlphaMissense":[GR38_positions_input, AM_data], 
                       "MutScore":[GR38_positions_input, MutScore_data],
                       "SIGMA":[GR38_positions_input, SIGMA_data],
                       "LASSIE":[GR37_positions_input, LASSIE_data],
@@ -288,21 +273,14 @@ if __name__ == "__main__":
 
     list_databases = dict_databases.keys()
     
-    list_databases = ['ESM1b', 'VESPA', 'EVE', 'CPT',
-                      'AlphaMissense', 'Envision', 'DeepSAV',
-                      'PONP2', 'VARITY', 'MutScore', 'SIGMA',
-                      'LASSIE', 'UNEECON',
-                      'MutFormer', 'CAPICE']
-
-
-
+    # list_databases = ["AlphaMissense"]
     s = time.time()
     Parallel(n_jobs = len(list_databases),
             prefer="processes")(delayed(run_one_db)(predictions_directory,
                                                     database,
                                                     dict_databases,
                                                     database_directory) \
-            for database in list_databases)
+                                                    for database in list_databases)
 
 
     print(time.time() - s)
