@@ -4,6 +4,13 @@
 # This script automates the generation of input files and runs various tools for variant effect prediction.
 # Usage: ./vep_predictions.sh /path/to. /path/to/variant_file mode genome_reference
 
+# Variables #
+script_folder="./scripts/"
+input_folder="./input_files/"
+predictions_folder="./predictions/"
+dbNSFP_data_folder="/dsimb/glaciere/radjasan/dbNSFP/academic/"
+phdsnp_folder="${script_folder}/PhDSNP/PhD-SNPg/"
+suspect_folder="${script_folder}/SuSPect/suspect_package/"
 
 # Functions #
 usage() {
@@ -62,13 +69,6 @@ if [ "$mode" == "ganno" ]; then
 fi
 
 
-script_folder="/home/wasabi/radjasan/git/BenchVEP/scripts/"
-phdsnp_folder="/home/wasabi/radjasan/these/benchmark/PhDSNP/PhD-SNPg/"
-suspect_folder="/home/wasabi/radjasan/these/benchmark/SuSPect/suspect_package/"
-dbNSFP_data_folder="/dsimb/glaciere/radjasan/dbNSFP/academic/"
-input_folder="./input_files/"
-predictions_folder="./predictions/"
-
 # Activate conda environment
 
 # Create necessary directories
@@ -90,7 +90,7 @@ if [ "$mode" == "panno" ]; then
 
     echo "Getting GR38 positions through TransVar"
     awk '{print $1":p."$2}' $input_folder/gene_var_tab.txt > $input_folder/gene_var_tab_transvar.txt
-    bash $script_folder/transvar/run_transvar.sh $input_folder/gene_var_tab_transvar.txt $input_folder $mode $refgenome
+    bash $script_folder/transvar/run_transvar.sh $input_folder/gene_var_tab_transvar.txt $input_folder $mode $refgenome $script_folder
     
     echo "TRANSVAR Time taken: ${SECONDS} seconds" >> $variant_file.log
     
