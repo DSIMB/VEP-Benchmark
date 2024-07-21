@@ -7,7 +7,7 @@
 
 # Functions #
 usage() {
-    echo "Usage: $0 -f /path/to/variant_file -m [panno|ganno] -g [38|37] -n [output_name] [-i]"
+    echo "Usage: $0 -f /path/to/variant_file -m [panno|ganno] -g [38|37] -n [output_name]"
     echo "  -f   File with gene name or Uniprot ID, amino acid variation and label (mode=panno) or chr pos nuc1 nuc2 label (mode=ganno)"
     echo "  -m   Format of variant used as input, either mode 'panno' (protein annotation) or mode 'ganno' (genomic annotation)"
     echo "  -g   Genome reference: 38 or 37 (if 'ganno' chosen as mode)"
@@ -15,7 +15,7 @@ usage() {
     exit 1
 }
 
-while getopts ":o:f:m:g:n" opt; do
+while getopts ":f:m:g:n:" opt; do
     case ${opt} in
         f )
             variant_file=$OPTARG
