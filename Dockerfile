@@ -28,29 +28,13 @@ WORKDIR /BenchVEP
 RUN echo $(ls -1 /BenchVEP)
 
 # # Copy the dependencies file to the working directory
-COPY transvar transvar
-ARG CACHEBUST=1
-COPY scripts scripts
-COPY envs envs
-COPY time_check time_check
-COPY uniprot uniprot
 
+
+COPY envs envs
 
 # # Install dependencies using Conda
 RUN conda env create -f envs/environment.yml
 RUN pip install -U transvar bgzip
-
-#  # Ensure the conda environment is activated
-SHELL ["conda", "run", "-n", "VEP", "/bin/bash", "-c"]
-
-
-# # RUN conda activate VEP
-
-# # Install databases
-RUN bash scripts/download_databases.sh
-
-
-RUN chmod +x scripts/all_pipeline_light.sh
 
 # # Command to run on container start
 ENTRYPOINT ["conda", "run", "-n", "VEP", "bash", "scripts/all_pipeline_light.sh"]
