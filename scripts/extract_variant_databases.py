@@ -148,7 +148,9 @@ def read_idvar_databases(database, dict_search_pattern, database_file, predictio
             ID = items[0]
             var = items[1]
             if database == "Envision":
-                string = items[1]
+                ID = items[0]
+                var = items[1]
+                string = f"{ID}_{var}"
             elif database == "DeepSAV":
                 var = f"{items[2]}{items[1]}{items[3]}"
                 string = f"{ID}_{var}"
@@ -159,7 +161,7 @@ def read_idvar_databases(database, dict_search_pattern, database_file, predictio
 
             if string in dict_search_pattern:
                 if database == "Envision":
-                    new_line = f"{items[5]}\t{items[7]}\t{items[-1]}\n"
+                    new_line = f"{ID}\t{var}\t{items[-1]}\n"
                 elif database == "DeepSAV":
                     new_line = f"{ID}\t{var}\t{items[4]}\n"
                 elif database == "PONP2":
@@ -205,6 +207,7 @@ def run_one_db(predictions_directory, database, dict_databases, database_directo
     input_file, database_file = dict_databases[database]
     if database_file:
         if not os.path.exists(database_file):
+            print(database_file, "does not exists")
             return
     print(f"[precomputed_VEP] Extracting {database} predictions...")
     if database in ["EVE", "CPT"]:
@@ -232,17 +235,17 @@ if __name__ == "__main__":
     VESPA_data =  f"{database_directory}/VESPA/vespal_human_proteome.h5"
     CPT_data = f"{database_directory}/CPT/proteome/"
     EVE_data = f"{database_directory}/EVE/variant_files/"
-    Envision_data = f"{database_directory}/Envision/Envision_clean.csv.gz"
+    Envision_data = f"{database_directory}/Envision/Envision_clean.tsv"
     DeepSAV_data =  f"{database_directory}/DeepSAV/humanSAV.txt.gz"
     PONP2_data =  f"{database_directory}/PONP2/ponp_predicion_combined_2.txt.gz"
     AM_data = f"{database_directory}/AlphaMissense/AlphaMissense_hg38.tsv.gz"
     MutScore_data =  f"{database_directory}/MutScore/mutscore-v1.0-hg38_sorted.tsv.gz"
-    SIGMA_data =  f"{database_directory}/SIGMA/sigma_scores.sorted.tsv.gz"
+    SIGMA_data =  f"{database_directory}/SIGMA/sigma_scores_sorted.txt.gz"
     LASSIE_data =  f"{database_directory}/LASSIE/LASSIE_fitness_effect_hg19.tsv.gz"
     UNEECON_data =  f"{database_directory}/UNEECON/UNEECON_variant_score_v1.0_hg19.tsv.gz"
-    InMeRF_data = f"{database_directory}/InMeRF/InMeRF_hg19_GRCh37.tsv.gz"
+    InMeRF_data = f"{database_directory}/InMeRF/InMeRF_score_hg38.txt.gz"
     MISTIC_data = f"{database_directory}/MISTIC/MISTIC_GRCh38.tsv.gz"
-    MutFormer_data = f"{database_directory}/MutFormer/hg19_MutFormer.gz"
+    MutFormer_data = f"{database_directory}/MutFormer/hg19_MutFormer_sorted.tsv.gz"
     CAPICE_data = f"{database_directory}/CAPICE/capice_v1.0_build37_snvs.tsv.gz"
 
 
@@ -269,7 +272,7 @@ if __name__ == "__main__":
                       "SIGMA":[GR38_positions_input, SIGMA_data],
                       "LASSIE":[GR37_positions_input, LASSIE_data],
                       "UNEECON":[GR37_positions_input, UNEECON_data],
-                      "InMeRF":[GR37_positions_input, InMeRF_data], 
+                      "InMeRF":[GR38_positions_input, InMeRF_data], 
                       "MISTIC":[GR38_positions_input, MISTIC_data],
                       "MutFormer":[GR37_positions_input, MutFormer_data],
                       "CAPICE":[GR37_positions_input, CAPICE_data],
@@ -280,7 +283,7 @@ if __name__ == "__main__":
     # list_databases = ["AlphaMissense"]
 
     s = time.time()
-    Parallel(n_jobs = 1,
+    Parallel(n_jobs = len(list_databases),
             prefer="processes")(delayed(run_one_db)(predictions_directory,
                                                     database,
                                                     dict_databases,
