@@ -1,21 +1,21 @@
-
 #!/bin/bash
+# improve oneline bgzip
+# Set path to git folder ?
 
 # This script automates the generation of input files and runs various tools for variant effect prediction.
-# Usage: ./vep_predictions.sh /path/to. /path/to/variant_file mode genome_reference
+# Usage: ./vep_predictions.sh /path/to/ /path/to/variant_file mode genome_reference [index]
 
 # Functions #
 usage() {
-    echo "Usage: $0 -f /path/to/variant_file -m [panno|ganno] -g [38|37]"
+    echo "Usage: $0 -f /path/to/variant_file -m [panno|ganno] -g [38|37] -n [output_name] [-i]"
     echo "  -f   File with gene name or Uniprot ID, amino acid variation and label (mode=panno) or chr pos nuc1 nuc2 label (mode=ganno)"
     echo "  -m   Format of variant used as input, either mode 'panno' (protein annotation) or mode 'ganno' (genomic annotation)"
-    echo "  -g   Genome reference: 38 or 37 (if 'ganno' choosed as mode)"
+    echo "  -g   Genome reference: 38 or 37 (if 'ganno' chosen as mode)"
     echo "  -n   Name of the output file with all predictions"
     exit 1
 }
 
-
-while getopts ":o:f:m:g:n:" opt; do
+while getopts ":o:f:m:g:n" opt; do
     case ${opt} in
         f )
             variant_file=$OPTARG
@@ -40,9 +40,8 @@ while getopts ":o:f:m:g:n:" opt; do
     esac
 done
 
-
 # Ensure all required arguments are provided
-if [ -z "." ] || [ -z "$variant_file" ] || [ -z "$mode" ] || [ -z "$output_name" ]; then
+if [ -z "$variant_file" ] || [ -z "$mode" ] || [ -z "$output_name" ]; then
     usage
 fi
 
@@ -60,9 +59,6 @@ if [ "$mode" == "ganno" ]; then
     fi
 fi
 
-
-# Activate conda environment
-
 # Variables #
 output_folder="./$output_name"
 script_folder="./scripts/"
@@ -75,12 +71,19 @@ dbnsfp_folder="$predictions_folder/dbNSFP"
 dbnsfp_output="$dbnsfp_folder/dbNSFP_output.tsv"
 dbNSFP_data_folder="$database_folder/dbNSFP/"
 
-
 # Create necessary directories
 echo "Creating $input_folder"
-echo "mkdir -p $input_folder"
 mkdir -p $input_folder
 mkdir -p $predictions_folder
+
+
+FLAG_FILE="./.first_run_complete"
+if [ ! -f "$FLAG_FILE" ]; then
+    echo "First run detected. Performing indexing of databases..."
+    bash $script_folder/configure_databases.sh
+    touch "$FLAG_FILE"
+    echo "Configuration done. If you want to redo this step, please remove the file ./.first_run_complete"
+fi
 
 
 # # Main Script #
