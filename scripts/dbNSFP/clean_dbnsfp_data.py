@@ -35,7 +35,7 @@ def get_args():
 
 
 def get_correct_index(line, dict_fasta, dict_variation):
-    df_gene = pd.DataFrame((line["genename"].split(";"))).value_counts()
+    df_gene = pd.DataFrame((line["Gene"].split(";"))).value_counts()
     index_gene = df_gene.argmax()
     gene = df_gene.index[index_gene][0]
 
@@ -162,22 +162,20 @@ if __name__ == "__main__":
     header_GR37 = ["#chr", "hg19_pos(1-based)", "ref", "alt"]
 
     with open(header_file) as f1, open(final_header_file) as f2, open(final_header_modified_file) as f3:
-        header = f1.readline().split("\t")
+        header = [x.strip() for x in f1]
         final_header = [x.strip() for x in f2]
         final_header_modified = [x.strip() for x in f3]
 
     dbnsfp_dtf = pd.read_csv(dbnsfp_file, sep="\t", names=header)
-
-
     list_gene = list(set(dbnsfp_dtf["genename"].apply(lambda line: get_list_genes(line)).values))
     dict_variation = get_dict_variation(gene_var_file)
     dict_fasta = get_sequences(list_gene)
+    
     dbnsfp_dtf = dbnsfp_dtf[final_header]
     dbnsfp_dtf.columns = final_header_modified
     clean_dbnsfp_dtf = dbnsfp_dtf.apply(lambda line: clean_line(line, dict_fasta, dict_variation), axis=1).dropna()
     final_dbnsfp = pd.DataFrame(clean_dbnsfp_dtf.to_dict()).T
     final_dbnsfp.columns = final_header_modified
-    final_dbnsfp.columns = ["Gene"] + final_header_modified[1:]
     variation = final_dbnsfp["aaref"].values + final_dbnsfp["aapos"].values + final_dbnsfp["aaalt"].values
     final_dbnsfp["Variation"] = variation
     final_dbnsfp = final_dbnsfp.replace("nan", np.NaN)
