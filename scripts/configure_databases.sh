@@ -40,7 +40,7 @@ echo "Configuring dbNSFP4.7a database..."
 for chrom in {1..22} X Y; 
 do 
     echo "Indexing chromosome $chrom..."
-    zcat $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz | { head -n 1; tail -n +2 | sort -T tmp -k1,1 -k2,2n -k9,9n | awk '$9 != "."'; } > $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}
+    zcat $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz | { head -n 1; tail -n +2 | sort -k1,1 -k2,2n -k9,9n | awk '$9 != "."'; } > $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}
     bgzip -f $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}
     tabix -p vcf -s 1 -b 2 -e 2 $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz
     mv $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz.tbi $database_folder/dbNSFP/tabix_38
