@@ -2,6 +2,7 @@ name: VEP
 channels:
   - conda-forge
   - defaults
+  - bioconda
 dependencies:
   - python=3.9
   - joblib=1.4.2
@@ -9,6 +10,7 @@ dependencies:
   - pandas=2.2.2
   - numpy=1.26.4
   - pip=24.0
+  - samtools=1.13
   - pip:
       - fair-esm
       - pysam==0.22.1
