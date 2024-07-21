@@ -9,9 +9,6 @@ LABEL version="1.0"
 LABEL maintainer="radja.ragou@gmail.com"
 
 
-
-
-
 # Install necessary packages
 RUN apt-get update && apt-get install -y \
     wget \
@@ -21,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     git \
     tabix \
     gcc \
+    cpanminus \
     && apt-get clean
     
 RUN conda update -n base -c defaults conda
@@ -51,12 +49,9 @@ SHELL ["conda", "run", "-n", "VEP", "/bin/bash", "-c"]
 # # Install databases
 RUN bash scripts/download_databases.sh
 
-# ARG CACHEBUST=1
-# RUN echo $(ls -1 /BenchVEP)
-
 
 RUN chmod +x scripts/all_pipeline_light.sh
 
 # # Command to run on container start
-ENTRYPOINT ["conda", "run", "-n", "VEP", "/bin/bash scripts/all_pipeline_light.sh"]
+ENTRYPOINT ["conda", "run", "-n", "VEP", "bash", "scripts/all_pipeline_light.sh"]
 
