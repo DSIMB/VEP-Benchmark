@@ -36,6 +36,9 @@ VARITY_R_score
 VARITY_ER_score
 VARITY_R_LOO_score
 VARITY_ER_LOO_score
+ESM1b_score
+EVE_score
+AlphaMissense_score
 DANN_score
 fathmm-MKL_coding_score
 fathmm-XF_coding_score
