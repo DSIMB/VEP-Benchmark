@@ -15,8 +15,12 @@ def get_args():
                         required=True, type=str)
     parser.add_argument('--databases',
                         help="Path to file to create",
-                        default="/home/wasabi/radjasan/these/benchmark/variant_databases/",
-                        required=False, type=str)
+                        required=True, type=str)
+    
+    parser.add_argument('--cpus',
+                        help="Path to file to create",
+                        default=-1,
+                        required=False, type=int)
     args = parser.parse_args()
     return args
 
@@ -130,9 +134,8 @@ def read_esm1b(id_var_file, database_directory, predictions_directory):
 
 
 def read_idvar_databases(database, dict_search_pattern, database_file, predictions_directory):
+    start_time = time.time()
     output_file = f"{predictions_directory}/{database}/{database}_predictions.tsv"
-    N_pattern = len(dict_search_pattern)
-    done = 0
     if "gz" in database_file:
         mode = "rt"
         open_fun = gzip.open
@@ -147,29 +150,72 @@ def read_idvar_databases(database, dict_search_pattern, database_file, predictio
             items = line.split()
             ID = items[0]
             var = items[1]
-            if database == "Envision":
-                ID = items[0]
-                var = items[1]
-                string = f"{ID}_{var}"
-            elif database == "DeepSAV":
-                var = f"{items[2]}{items[1]}{items[3]}"
+            if database in ["Envision", "DeepSAV"]:
+                score = items[-1]
                 string = f"{ID}_{var}"
             elif database == "PONP2":
                 ID = items[-1]
                 var = items[2]
                 string = items[0]
-
-            if string in dict_search_pattern:
-                if database == "Envision":
-                    new_line = f"{ID}\t{var}\t{items[-1]}\n"
-                elif database == "DeepSAV":
-                    new_line = f"{ID}\t{var}\t{items[4]}\n"
-                elif database == "PONP2":
-                    new_line = f"{ID}\t{var}\t{items[3]}\n"
+                score = items[3]
+            if string in dict_search_pattern and dict_search_pattern[string] == 0:
+                new_line = f"{ID}\t{var}\t{score}\n"
                 fout.write(new_line)
-                done += 1
-                if done == N_pattern:
-                    break
+                dict_search_pattern[string] = 1
+    print("TIME", database, time.time() - start_time)
+
+
+def load_index(index_file):
+    with open(index_file, 'r') as f:
+        index = {protein_id: int(offset) for protein_id, offset in 
+                 (line.strip().split() for line in f)}
+    return index
+
+def read_idvar_databases(database, dict_search_pattern, database_file, predictions_directory):
+    start_time = time.time()
+    output_file = f"{predictions_directory}/{database}/{database}_predictions.tsv"
+    if "gz" in database_file:
+        mode = "rt"
+        open_fun = gzip.open
+    else:
+        mode= "r"
+        open_fun = open
+
+    index_file = f"{database_file}.tbi"
+    index = load_index(index_file)
+    queries = list(dict_search_pattern.keys())
+    prot_done = {}
+    with open_fun(database_file, mode, encoding='utf-8') as db_file, open(output_file, "w") as fout:
+        for query in queries:
+            protein_id, variation = query.split("_")
+            if protein_id in prot_done:
+                continue
+            if protein_id in index:
+                db_file.seek(index[protein_id])
+                for line in db_file:
+                    line = line.strip()
+                    items = line.split()
+                    record_protein_id = items[0]
+                    var = items[1]
+                    if database in ["Envision", "DeepSAV"]:
+                        record_variation = f"{record_protein_id}_{var}"
+                        score = items[-1]
+                    elif database == "PONP2":
+                        record_protein_id = items[-1]
+                        var = items[2]
+                        record_variation = items[0]
+                        score = items[3]
+                    if record_variation in dict_search_pattern and dict_search_pattern[record_variation] == 0:
+                        new_line = f"{record_protein_id}\t{var}\t{score}\n"
+                        fout.write(new_line)
+                        dict_search_pattern[record_variation] = 1
+                    elif record_protein_id != protein_id:
+                        # prot_done[protein_id] = 0
+                        print(record_protein_id, protein_id)
+                        break
+
+    print("TIME", database, time.time() - start_time)
+
 
 def read_genomics_databases(input_file, database, database_file, predictions_directory):
     output_file = f"{predictions_directory}/{database}/{database}_predictions.tsv"
@@ -231,12 +277,13 @@ if __name__ == "__main__":
     input_directory = f"{directory}/input_files"
     predictions_directory = f"{directory}/predictions"
     database_directory = args.databases
+    n_cpu = args.cpus
 
     VESPA_data =  f"{database_directory}/VESPA/vespal_human_proteome.h5"
     CPT_data = f"{database_directory}/CPT/proteome/"
     EVE_data = f"{database_directory}/EVE/variant_files/"
     Envision_data = f"{database_directory}/Envision/Envision_clean.tsv"
-    DeepSAV_data =  f"{database_directory}/DeepSAV/humanSAV.txt.gz"
+    DeepSAV_data =  f"{database_directory}/DeepSAV/humanSAV_light.txt.gz"
     PONP2_data =  f"{database_directory}/PONP2/ponp_predicion_combined_2.txt.gz"
     AM_data = f"{database_directory}/AlphaMissense/AlphaMissense_hg38.tsv.gz"
     MutScore_data =  f"{database_directory}/MutScore/mutscore-v1.0-hg38_sorted.tsv.gz"
@@ -280,10 +327,15 @@ if __name__ == "__main__":
 
     list_databases = dict_databases.keys()
     
-    # list_databases = ["AlphaMissense"]
+    # list_databases = ["Envision"]
 
     s = time.time()
-    Parallel(n_jobs = len(list_databases),
+    if n_cpu == -1:
+        n_jobs = len(list_databases)
+    else:
+        # check max cpu
+        n_jobs = n_cpu
+    Parallel(n_jobs = n_jobs,
             prefer="processes")(delayed(run_one_db)(predictions_directory,
                                                     database,
                                                     dict_databases,
