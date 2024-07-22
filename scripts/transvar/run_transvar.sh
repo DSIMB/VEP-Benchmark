@@ -1,3 +1,4 @@
+#!/bin/bash
 variant_input_file=$1
 output_folder=$2
 mode=$3
