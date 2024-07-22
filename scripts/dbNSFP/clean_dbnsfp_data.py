@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import pandas as pd
 import numpy as np
 import sys
@@ -26,7 +27,9 @@ def get_args():
                         help="Path to directory containing all dbNSFP files",
                         default="./input_files",
                         required=False, type=str)
-    
+    parser.add_argument('--fasta_file',
+                        help="Path to multi-fasta file from UniProt",
+                        required=True, type=str)
     args = parser.parse_args()
     variant_file = args.file
     if not os.path.exists(variant_file):
@@ -99,8 +102,7 @@ def clean_line(line, dict_fasta, dict_variation):
 
 
 
-def get_sequences(list_gene):
-    multi_fasta_file = "/dsimb/wasabi/radjasan/these//benchmark/Uniprot/uniprot-compressed_true_download_true_format_fasta_query__28_2A_29_2-2023.03.28-13.08.10.56.fasta"
+def get_sequences(list_gene, multi_fasta_file):
     get = False
     dict_seq = {}
     with open(multi_fasta_file) as filin:
@@ -152,7 +154,7 @@ if __name__ == "__main__":
     dbnsfp_file = args.dbnsfp_file
     clean_dbnsfp_file_output = args.output_file
     input_folder = args.input_folder
-
+    multi_fasta_file = args.fasta_file
 
     header_file = f"{intermediate_folder}/header.txt"
     final_header_file = f"{intermediate_folder}/final_header.txt"
@@ -169,7 +171,7 @@ if __name__ == "__main__":
     dbnsfp_dtf = pd.read_csv(dbnsfp_file, sep="\t", names=header)
     list_gene = list(set(dbnsfp_dtf["genename"].apply(lambda line: get_list_genes(line)).values))
     dict_variation = get_dict_variation(gene_var_file)
-    dict_fasta = get_sequences(list_gene)
+    dict_fasta = get_sequences(list_gene, multi_fasta_file)
     
     dbnsfp_dtf = dbnsfp_dtf[final_header]
     dbnsfp_dtf.columns = final_header_modified

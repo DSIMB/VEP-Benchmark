@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import os
 import time
@@ -63,7 +64,6 @@ def process_one_chr(chromosome, args):
     else:
         index_file = f"{path_data}/tabix_37/dbNSFP{dbnsfp_version}a_variant.chr{chromosome}.gz.tbi"
 
-    print(index_file, fulloutput_file)
     tabix_file = pysam.TabixFile(chr_file, index=index_file, encoding="utf8")
 
     with open(input_file) as in_file, open(fulloutput_file, "w") as fout:
