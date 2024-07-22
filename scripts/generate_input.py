@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Generation of inputs: id_var, gene_var, genevar_seq, ESM, VariPred
 Usage:
 
@@ -21,8 +22,7 @@ def get_args():
                         required=False, type=str)
     parser.add_argument('--fasta_file',
                         help="Path to multi-fasta file from UniProt",
-                        default="./uniprot/uniprot-compressed_true_download_true_format_fasta_query__28_2A_29_2-2023.03.28-13.08.10.56.fasta",
-                        required=False, type=str)
+                        required=True, type=str)
     args = parser.parse_args()
 
     variant_file = args.file
