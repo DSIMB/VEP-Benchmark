@@ -16,15 +16,17 @@ def get_args():
 
 def create_protein_index(data_file, index_file, index_protein_id):
     done = {}
-    with gzip.open(data_file, 'rt') as f, open(index_file, 'w') as idx:
+    if "gz" in data_file:
+        func_open = gzip.open
+        mode = "rt"
+    else:
+        func_open = open
+        mode = "r"
+    with func_open(data_file, mode) as f, open(index_file, 'w') as idx:
         current_position = 0
         for line in f:
             items = line.split()
-            try:
-                protein_id = items[index_protein_id]
-            except:
-                print(line)
-                continue
+            protein_id = items[index_protein_id]
             if protein_id not in done:
                 idx.write(f"{protein_id}\t{current_position}\n")
                 done[protein_id] = 0
