@@ -6,16 +6,21 @@
 # Usage: ./vep_predictions.sh /path/to/ /path/to/variant_file mode genome_reference [index]
 
 # Functions #
+
+
 usage() {
-    echo "Usage: $0 -f /path/to/variant_file -m [panno|ganno] -g [38|37] -n [output_name]"
-    echo "  -f   File with gene name or Uniprot ID, amino acid variation and label (mode=panno) or chr pos nuc1 nuc2 label (mode=ganno)"
-    echo "  -m   Format of variant used as input, either mode 'panno' (protein annotation) or mode 'ganno' (genomic annotation)"
-    echo "  -g   Genome reference: 38 or 37 (if 'ganno' chosen as mode)"
-    echo "  -n   Name of the output file with all predictions"
+    echo "[INFO] Usage: $0 -f /path/to/variant_file -m [panno|ganno] -g [38|37] -n [output_name] [-d]"
+    echo "[INFO]   -f   File with gene name or Uniprot ID, amino acid variation and label (mode=panno) or chr pos nuc1 nuc2 label (mode=ganno)"
+    echo "[INFO]   -m   Format of variant used as input, either mode 'panno' (protein annotation) or mode 'ganno' (genomic annotation)"
+    echo "[INFO]   -g   Genome reference: 38 or 37 (if 'ganno' chosen as mode)"
+    echo "[INFO]   -n   Name of the output file with all predictions"
+    echo "[INFO]   -d   Name of the output file with all predictions"
     exit 1
 }
 
-while getopts ":f:m:g:n:" opt; do
+docker_flag="false"
+
+while getopts ":f:m:g:n:docker:" opt; do
     case ${opt} in
         f )
             variant_file=$OPTARG
@@ -29,12 +34,15 @@ while getopts ":f:m:g:n:" opt; do
         n )
             output_name=$OPTARG
             ;;
+        d )
+            docker_flag=true
+            ;;
         \? )
-            echo "Invalid option: -$OPTARG" >&2
+            echo "[INFO] Invalid option: -$OPTARG" >&2
             usage
             ;;
         : )
-            echo "Option -$OPTARG requires an argument." >&2
+            echo "[INFO] Option -$OPTARG requires an argument." >&2
             usage
             ;;
     esac
@@ -47,80 +55,92 @@ fi
 
 # Validate mode argument
 if [[ "$mode" != "panno" && "$mode" != "ganno" ]]; then
-    echo "Invalid mode: $mode. Please choose between ganno or panno."
+    echo "[INFO] Invalid mode: $mode. Please choose between ganno or panno."
     usage
 fi
 
 if [ "$mode" == "ganno" ]; then
     # Validate genome reference argument
     if [[ "$refgenome" != "38" && "$refgenome" != "37" ]]; then
-        echo "Invalid genome reference. Please choose between 38 (GR38) or 37 (GR37)."
+        echo "[INFO] Invalid genome reference. Please choose between 38 (GR38) or 37 (GR37)."
         usage
     fi
 fi
 
+path_data="."; [ "$docker_flag" = true ] && path_data="/data" 
+
 # Variables #
-output_folder="./$output_name"
-script_folder="./scripts/"
-database_folder="./variant_databases/"
+variant_file="$path_data/$variant_file"
+output_folder="$path_data/$output_name"
+script_folder="$path_data/scripts/"
+database_folder="$path_data/variant_databases/"
+multi_fasta_file="$path_data/uniprot/uniprot_28_2A_29_2-2023.03.28-13.08.10.56.fasta"
 input_folder="$output_folder/input_files/"
 predictions_folder="$output_folder/predictions/"
-phdsnp_folder="${script_folder}/PhDSNP/PhD-SNPg/"
-suspect_folder="${script_folder}/SuSPect/suspect_package/"
+phdsnp_folder="$script_folder/PhDSNP/PhD-SNPg/"
+suspect_folder="$script_folder/SuSPect/suspect_package/"
 dbnsfp_folder="$predictions_folder/dbNSFP"
 dbnsfp_output="$dbnsfp_folder/dbNSFP_output.tsv"
 dbNSFP_data_folder="$database_folder/dbNSFP/"
-
 # Create necessary directories
-echo "Creating $input_folder"
+echo "[INFO] Creating $input_folder"
 mkdir -p $input_folder
 mkdir -p $predictions_folder
 
 
-FLAG_FILE="./.first_run_complete"
+FLAG_FILE="$path_data/.first_run_complete"
 if [ ! -f "$FLAG_FILE" ]; then
-    echo "First run detected. Performing indexing of databases..."
-    bash $script_folder/configure_databases.sh
+    echo "[INFO] First run detected. Performing indexing of databases..."
+    bash $script_folder/configure_databases.sh $path_data 
     touch "$FLAG_FILE"
-    echo "Configuration done. If you want to redo this step, please remove the file ./.first_run_complete"
+    echo "[INFO] Configuration done. If you want to redo this step, please remove the file $path_data/.first_run_complete"
+else
+    echo "[INFO] Skipping database configuration."
+    output_transvar=$(transvar "$mode" --refversion "$refgenome" 2>&1)
+    if echo "[INFO] $output_transvar" | grep -q "NoSectionError"; then
+        bash $script_folder/configure_transvar.sh $path_data
+    fi
 fi
-
 
 # # Main Script #
 
 SECONDS=0
 
 if [ "$mode" == "panno" ]; then
-    echo "Mode: Protein annotation (panno)"
-    echo "Generating input files: genevar, idvar, geneseq, ESM, VariPred"
-    python $script_folder/generate_input.py -f $variant_file -o $output_folder 
-    echo "Input files Time taken: ${SECONDS} seconds" >> $variant_file.log
+    echo "[INFO] Mode: Protein annotation (panno)"
+    echo "[INFO] Generating input files: genevar, idvar, geneseq, ESM, VariPred"
+    python $script_folder/generate_input.py -f $variant_file \
+                                            -o $output_folder  \
+                                            --fasta_file $multi_fasta_file
+    echo "[INFO] Input files Time taken: ${SECONDS} seconds" >> $variant_file.log
 
 
     SECONDS=0
 
-    echo "Getting GR38 positions through TransVar"
+    echo "[INFO] Getting GR38 positions through TransVar"
     awk '{print $1":p."$2}' $input_folder/gene_var_tab.txt > $input_folder/gene_var_tab_transvar.txt
     bash $script_folder/transvar/run_transvar.sh $input_folder/gene_var_tab_transvar.txt $input_folder $mode $refgenome $script_folder
     
-    echo "TRANSVAR Time taken: ${SECONDS} seconds" >> $variant_file.log
+    echo "[INFO] TRANSVAR Time taken: ${SECONDS} seconds" >> $variant_file.log
     
 
 elif [ "$mode" == "ganno" ]; then
-    echo "Mode: Genomic annotation (ganno)"
+    echo "[INFO] Mode: Genomic annotation (ganno)"
     awk '{print "chr"$1":g."$2$3">"$4}' $variant_file > $input_folder/input_genomic_transvar.txt
     bash $script_folder/transvar/run_transvar.sh $input_folder/input_genomic_transvar.txt $input_folder $mode $refgenome
-    echo "TRANSVAR Time taken: ${SECONDS} seconds" >> $variant_file.log
+    echo "[INFO] TRANSVAR Time taken: ${SECONDS} seconds" >> $variant_file.log
     SECONDS=0
 
     awk '{print $5"\t"$6}' $input_folder/genomic_position_GR${refgenome}_gene_var.tsv | sort | uniq > $input_folder/gene_var_tab_from_transvar.tsv
 
-    echo "Generating input files: genevar, idvar, geneseq, ESM, VariPred"
-    python $script_folder/generate_input.py -f $input_folder/gene_var_tab_from_transvar.tsv -o $output_folder
-    echo "Input files Time taken: ${SECONDS} seconds" >> $variant_file.log
+    echo "[INFO] Generating input files: genevar, idvar, geneseq, ESM, VariPred"
+    python $script_folder/generate_input.py -f $input_folder/gene_var_tab_from_transvar.tsv \
+                                            -o $output_folder \
+                                            --fasta_file --fasta_file $multi_fasta_file
+    echo "[INFO] Input files Time taken: ${SECONDS} seconds" >> $variant_file.log
 
 else
-    echo "Invalid mode provided. Please use 'panno' or 'ganno'."
+    echo "[INFO] Invalid mode provided. Please use 'panno' or 'ganno'."
     exit 1
 fi
 # Precomputed Predictions #
@@ -146,20 +166,21 @@ python  $script_folder/dbNSFP/clean_dbnsfp_data.py -f $variant_file \
                                                    -int $script_folder/intermediate_files \
                                                    -df $dbnsfp_output \
                                                    -inp $input_folder \
-                                                   -o $dbnsfp_output.cleaned
+                                                   -o $dbnsfp_output.cleaned \
+                                                   --fasta_file $multi_fasta_file
                                                    
 
 
 awk '$2 != "." {print $1":"$2"-"$2"\t"$3"\t"$4}' $input_folder/dbnsfp_genomic_position_GR37.tsv  > $input_folder/dbnsfp_genomic_position_GR37_tabix.tsv
 awk '$2 != "." {print $1":"$2"-"$2"\t"$3"\t"$4}' $input_folder/dbnsfp_genomic_position_GR38.tsv  > $input_folder/dbnsfp_genomic_position_GR38_tabix.tsv
 
-echo "dbNSFP Time taken: ${SECONDS} seconds" >> $variant_file.log
+echo "[INFO] dbNSFP Time taken: ${SECONDS} seconds" >> $variant_file.log
 
 SECONDS=0
 
 # # Variant database
 python $script_folder/extract_variant_databases.py -d $output_folder --databases $database_folder 
-echo "VEP Time taken: ${SECONDS} seconds" >> $variant_file.log
+echo "[INFO] VEP Time taken: ${SECONDS} seconds" >> $variant_file.log
 
 # # Web servers #
 
@@ -169,7 +190,7 @@ SECONDS=0
 # mkdir -p $predictions_folder/PhDSNP/
 # python2 $phdsnp_folder/predict_variants.py $input_folder/genomic_position_GR38_postrand.tsv \
 #         -g 38  | sort | uniq | awk 'NR > 1 {print $1"\t"$2"\t"$3"\t"$4"\t"$7}' > $predictions_folder/PhDSNP/PhDSNP_predictions.tsv
-# echo "PHD Time taken: ${SECONDS} seconds" >> $variant_file.log
+# echo "[INFO] PHD Time taken: ${SECONDS} seconds" >> $variant_file.log
 
 
 # docker run -v /home/your_home:/home/your_home  phd-snpg:full] \
@@ -179,7 +200,7 @@ SECONDS=0
 # # # # SuSPect
 SECONDS=0
 
-# echo SuSPect
+# echo S[INFO] uSPect
 #ls -lahrt /BenchVEP/scripts/
 #ls -lahrt /BenchVEP
 mkdir -p $predictions_folder/SuSPect/
@@ -187,7 +208,7 @@ perl $script_folder/suspect/suspect_package/suspect.pl --input $input_folder/id_
 
 awk  -F "\t" '{print $1"\t"$2"\t"$6}' $predictions_folder/SuSPect/SuSPect_predictions_tmp.tsvaa > $predictions_folder/SuSPect/SuSPect_predictions.tsv
 rm $predictions_folder/SuSPect/SuSPect_predictions_tmp.tsv
-echo "SuSPECT Time taken: ${SECONDS} seconds" >> $variant_file.log
+echo "[INFO] SuSPECT Time taken: ${SECONDS} seconds" >> $variant_file.log
 
 # # GPU predictions #
 
@@ -199,4 +220,4 @@ echo "SuSPECT Time taken: ${SECONDS} seconds" >> $variant_file.log
 
 # python $script_folder/concat_predictions.py -d . -f $variant_file -m $mode -n $output_name
 
-# echo "Done"
+# echo "[INFO] Done"
