@@ -1,14 +1,41 @@
 #!/bin/bash
 # improve oneline bgzip
 # Set path to git folder ?
-database_folder="./variant_databases"
-transvar_folder="./transvar"
-script_folder="./scripts"
+
+path_data=$1
+database_folder="$path_data/variant_databases"
+transvar_folder="$path_data/transvar"
+script_folder="$path_data/scripts"
+
+
+# Reference genome hg38
+echo "Configuring reference genome hg38..."
+gunzip $transvar_folder/hg38/hg38.fa.gz
+samtools faidx $transvar_folder/hg38/hg38.fa.gz
+transvar config -k reference -v $(realpath $path_data/transvar/hg38/hg38.fa) --refversion hg38
+transvar config -k ensembl -v $(realpath $path_data/transvar/hg38/hg38.ensembl.gtf.gz.transvardb) --refversion hg38
+
+# Reference genome hg19
+echo "Configuring reference genome hg19..."
+gunzip $transvar_folder/hg19/hg19.fa.gz
+samtools faidx $transvar_folder/hg19/hg19.fa.gz
+transvar config -k reference -v $(realpath $path_data/transvar/hg19/hg19.fa) --refversion hg19
+transvar config -k ensembl -v $(realpath $path_data/transvar/hg19/hg19.ensembl.gtf.gz.transvardb) --refversion hg19
+
+
 
 # Envision
 echo "Configuring Envision database..."
 bzip2 -d $database_folder/Envision/human_predicted_combined_20170925.csv.bz2
-awk -F "," 'NR>2 {print $6"\t"$8"\t"$NF}' $database_folder/Envision/human_predicted_combined_20170925.csv > $database_folder/Envision/Envision_clean.tsv
+awk -F "," 'NR>2 && $6 != "" {print $6"\t"$8"\t"$NF}' $database_folder/Envision/human_predicted_combined_20170925.csv | sort -k1,1 -k2,2 > $database_folder/Envision/Envision_clean.tsv
+python $script_folder/create_index.py --file $database_folder/Envision/Envision_clean.tsv -i 0
+
+# DeepSAV
+echo "Configuring DeepSAV database..."
+zcat $database_folder/DeepSAV/humanSAV.txt.gz | awk '{print $1"\t"$3$2$4"\t"$5}' | uniq  | sort -k1,1 -k2,2 | gzip > $database_folder/DeepSAV/humanSAV_light.txt.gz
+python $script_folder/create_index.py --file $database_folder/DeepSAV/humanSAV_light.txt.gz -i 0
+
+
 
 # InMeRF (to index)
 echo "Configuring InMeRF database..."
@@ -57,16 +84,3 @@ echo "Setting up SuSPect database..."
 perl -MCPAN -e 'install DBI'
 perl -MCPAN -e 'install DBD::SQLite'
 
-# Reference genome hg38
-echo "Configuring reference genome hg38..."
-gunzip $transvar_folder/hg38/hg38.fa.gz
-samtools faidx $transvar_folder/hg38/hg38.fa.gz
-transvar config -k reference -v $(realpath transvar/hg38/hg38.fa) --refversion hg38
-transvar config -k ensembl -v $(realpath transvar/hg38/hg38.ensembl.gtf.gz.transvardb) --refversion hg38
-
-# Reference genome hg19
-echo "Configuring reference genome hg19..."
-gunzip $transvar_folder/hg19/hg19.fa.gz
-samtools faidx $transvar_folder/hg19/hg19.fa.gz
-transvar config -k reference -v $(realpath transvar/hg19/hg19.fa) --refversion hg19
-transvar config -k ensembl -v $(realpath transvar/hg19/hg19.ensembl.gtf.gz.transvardb) --refversion hg19
