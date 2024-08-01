@@ -64,16 +64,16 @@ transvar config -k ensembl -v $(realpath $path_data/transvar/hg19/hg19.ensembl.g
 
 # # dbNSFP4.7a
 # echo "Configuring dbNSFP4.7a database..."
-for chrom in {1..22} X Y; 
-do 
-    echo "Indexing chromosome $chrom..."
-    zcat $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz | { head -n 1; tail -n +2 | sort -k1,1 -k2,2n -k9,9n | awk '$9 != "."'; } > $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}
-    bgzip -f $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}
-    tabix -p vcf -s 1 -b 2 -e 2 $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz
-    mv $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz.tbi $database_folder/dbNSFP/tabix_38
-    tabix -p vcf -s 1 -b 9 -e 9 $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz
-    mv $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz.tbi $database_folder/dbNSFP/tabix_19
-done 
+# for chrom in {1..22} X Y; 
+# do 
+#     echo "Indexing chromosome $chrom..."
+#     zcat $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz | { head -n 1; tail -n +2 | sort -k1,1 -k2,2n -k9,9n | awk '$9 != "."'; } > $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}
+#     bgzip -f $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}
+#     tabix -p vcf -s 1 -b 2 -e 2 $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz
+#     mv $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz.tbi $database_folder/dbNSFP/tabix_38
+#     tabix -p vcf -s 1 -b 9 -e 9 $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz
+#     mv $database_folder/dbNSFP/dbNSFP4.7a_variant.chr${chrom}.gz.tbi $database_folder/dbNSFP/tabix_19
+# done 
 
 # # Extract headers from dbNSFP files
 # echo "Extracting headers from dbNSFP files..."
@@ -86,11 +86,11 @@ done
 # sed "s,/suspect_package/data/,data/," $script_folder/suspect/suspect_package/suspect.pl -i
 
 
-echo "Setting up PhD-SNPg database..."
-mkdir -p $script_folder/phdsnp/
-git clone https://github.com/biofold/PhD-SNPg $script_folder/phdsnp
-echo "Running $script_folder/phdsnp/setup.py from PhD-SNPg github... \
-(can take hours, output text will be in $script_folder/phdsnp/.setup_output if needed)"
-eval "$(conda shell.bash hook)"
-conda activate phdsnp
-python2 $script_folder/phdsnp/setup.py install linux.x86_64 >  $script_folder/phdsnp/.setup_output
+# echo "Setting up PhD-SNPg database..."
+# mkdir -p $script_folder/phdsnp/
+# git clone https://github.com/biofold/PhD-SNPg $script_folder/phdsnp
+# echo "Running $script_folder/phdsnp/setup.py from PhD-SNPg github... \
+# (can take hours, output text will be in $script_folder/phdsnp/.setup_output if needed)"
+# eval "$(conda shell.bash hook)"
+# conda activate phdsnp
+# python2 $script_folder/phdsnp/setup.py install linux.x86_64 >  $script_folder/phdsnp/.setup_output
