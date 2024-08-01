@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+
+"""
+Script to generate input files needed to retrieve predictions from Variant Effect Predictors (VEP).
+This script processes genomic positions and retrieves corresponding dbNSFP predictions for specific chromosomes.
+
+Usage:
+    ./script_name.py -f <path_to_file> -o <output_file> -r <reference_genome> -d <data_path> -v <dbnsfp_version>
+"""
+
+
 import sys
 import os
 import time
@@ -7,6 +17,10 @@ from joblib import Parallel, delayed
 import pysam
 
 def get_args():
+    """
+    Parse and return the command line arguments.
+    """
+    
     parser = argparse.ArgumentParser(description='Generating input files needed to retrieve predictions from Variant Effect Predictors')
     parser.add_argument('-f', '--file',
                         help="Path to file containing genomic positions",
@@ -37,6 +51,20 @@ def get_args():
     return args
 
 def pattern_hash(file):
+    """
+    Create a dictionary with the counts of each chromosome in the input file.
+
+    Parameters
+    ----------
+    file : str
+        Path to the input file containing genomic positions.
+
+    Returns
+    -------
+    dict
+        Dictionary with chromosomes as keys and their counts as values.
+    """
+
     dict_chrom = {}
     with open(file) as filin:
         for line in filin:
@@ -49,6 +77,17 @@ def pattern_hash(file):
 
 
 def process_one_chr(chromosome, args):
+    """
+    Process a single chromosome to retrieve and write dbNSFP predictions.
+
+    Parameters
+    ----------
+    chromosome : str
+        Chromosome to be processed.
+    args : argparse.Namespace
+        Parsed command line arguments.
+    """
+
     print(f"[dbNSFP] Parsing chromosome {chromosome}")
     input_file = args.file
     output_file = args.output_file

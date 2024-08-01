@@ -7,27 +7,23 @@ import argparse
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description='Generating input files needed to retrieve predictions from Variant Effect Predictors')
-    parser.add_argument('-f', '--file',
-                        help="Path to file containing genomic positions",
+    parser = argparse.ArgumentParser(description="Clean the dbNSFP output predictions")
+    parser.add_argument("-f", "--file",
+                        help="Path to the file containing Gene and Variation informations",
                         required=True, type=str)
-    # Faire + simple
-    parser.add_argument('-int', '--intermediate_folder',
-                        help="Path to directory containing all dbNSFP files",
+    parser.add_argument("-I", "--intermediate_folder",
+                        help="Path to the directory containing headers from dbNSFP files",
                         required=True, type=str)
-    parser.add_argument('-df', '--dbnsfp_file',
-                        help="Path to file to create",
-                        default="./predictions/dbNSFP/dbNSFP_output.tsv",
-                        required=False, type=str)
-    parser.add_argument('-o', '--output_file',
-                        help="Choose the reference genome to consider between 38 and 37 (default:38)",
-                        default="./predictions/dbNSFP/dbNSFP_output_clean.tsv",
-                        required=False, type=str)
-    parser.add_argument('-inp', '--input_folder',
-                        help="Path to directory containing all dbNSFP files",
-                        default="./input_files",
-                        required=False, type=str)
-    parser.add_argument('--fasta_file',
+    parser.add_argument("-d", "--dbnsfp_file",
+                        help="Path to the concatenated dbNSFP file with all predictions",
+                        required=True, type=str)
+    parser.add_argument("-o", "--output_file",
+                        help="Path to the output file",
+                        required=True, type=str)
+    parser.add_argument("-i", "--input_folder",
+                        help="Path to the directory containing the input_files directory",
+                        required=True, type=str)
+    parser.add_argument("-m", "--multi_fasta",
                         help="Path to multi-fasta file from UniProt",
                         required=True, type=str)
     args = parser.parse_args()
@@ -38,6 +34,26 @@ def get_args():
 
 
 def get_correct_index(line, dict_fasta, dict_variation):
+    """
+    Get the correct index for the variation based on the fasta sequence of the gene.
+
+    According to the transcript, dbNSFP can yield mutliple variation positions for each gene.
+    We remove those that does not match the UniProt sequence.
+
+    Parameters
+    ----------
+    line : pd.Series
+        A pandas series representing a row from the dbNSFP file.
+    dict_fasta : dict
+        Dictionary containing gene sequences.
+    dict_variation : dict
+        Dictionary containing valid variations for each gene.
+
+    Returns
+    -------
+    list
+        List of correct indices for the variations.
+    """
     df_gene = pd.DataFrame((line["Gene"].split(";"))).value_counts()
     index_gene = df_gene.argmax()
     gene = df_gene.index[index_gene][0]
@@ -48,6 +64,8 @@ def get_correct_index(line, dict_fasta, dict_variation):
     correct_index = []
     if gene in dict_fasta:
         sequence = dict_fasta[gene]
+        if "ART" in line["Gene"] and "265" in line["aapos"]:
+            print(sequence)
         for i in range(len(pos_field)):
             position = int(pos_field[i])
             variation = f"{aaref}{position}{aaalt}"
@@ -61,7 +79,26 @@ def get_correct_index(line, dict_fasta, dict_variation):
 
 
 def clean_line(line, dict_fasta, dict_variation):
+    """
+    Clean a single line from the dbNSFP file.
+
+    Parameters
+    ----------
+    line : pd.Series
+        A pandas series representing a row from the dbNSFP file.
+    dict_fasta : dict
+        Dictionary containing gene sequences.
+    dict_variation : dict
+        Dictionary containing valid variations for each gene.
+
+    Returns
+    -------
+    np.ndarray or np.NaN
+        Cleaned line as numpy array or NaN if no correct indices found.
+    """
     correct_index = get_correct_index(line, dict_fasta, dict_variation)
+    if "ART" in line["Gene"] and "265" in line["aapos"]:
+        print(line, correct_index)
     if len(correct_index) == 0:
         return np.NaN
     new_line = []
@@ -103,6 +140,21 @@ def clean_line(line, dict_fasta, dict_variation):
 
 
 def get_sequences(list_gene, multi_fasta_file):
+    """
+    Get sequences from the multi-fasta file.
+
+    Parameters
+    ----------
+    list_gene : list
+        List of genes.
+    multi_fasta_file : str
+        Path to the multi-fasta file.
+
+    Returns
+    -------
+    dict
+        Dictionary of sequences for each gene.
+    """
     get = False
     dict_seq = {}
     with open(multi_fasta_file) as filin:
@@ -125,6 +177,19 @@ def get_sequences(list_gene, multi_fasta_file):
 
 
 def get_dict_variation(gene_var_file):
+    """
+    Get dictionary of variations from the gene variation file.
+
+    Parameters
+    ----------
+    gene_var_file : str
+        Path to the gene variation file.
+
+    Returns
+    -------
+    dict
+        Dictionary of variations for each gene.
+    """
     dict_variation = {}
     with open(gene_var_file) as f:
         for line in f:
@@ -138,7 +203,20 @@ def get_dict_variation(gene_var_file):
             dict_variation[gene][variation] = 0
     return dict_variation
 
-def get_list_genes(line):
+def get_list_genes(line):    
+    """
+    Get the list of genes from a line.
+
+    Parameters
+    ----------
+    line : str
+        A string representing a line from the dataframe.
+
+    Returns
+    -------
+    str
+        The gene name with the highest count.
+    """
     df_gene = pd.DataFrame((line.split(";"))).value_counts()
     index_gene = df_gene.argmax()
     gene = df_gene.index[index_gene][0]
@@ -154,7 +232,7 @@ if __name__ == "__main__":
     dbnsfp_file = args.dbnsfp_file
     clean_dbnsfp_file_output = args.output_file
     input_folder = args.input_folder
-    multi_fasta_file = args.fasta_file
+    multi_fasta_file = args.multi_fasta
 
     header_file = f"{intermediate_folder}/header.txt"
     final_header_file = f"{intermediate_folder}/final_header.txt"
