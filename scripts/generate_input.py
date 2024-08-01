@@ -16,13 +16,16 @@ def get_args():
     parser.add_argument('-f', '--file',
                         help="Path to the variant file with following columns: Gene|UniprotID, Protein mutation, Label",
                         required=True, type=str)
+    parser.add_argument('-s', '--script_folder',
+                        help="Directory containing the ESM1v script 'predict.py'",
+                        required=True, type=str)
+    parser.add_argument('--fasta_file',
+                        help="Path to multi-fasta file from UniProt",
+                        required=True, type=str)
     parser.add_argument('-o', '--output_folder',
                         help="Directory in which 'input_files' and 'predictions' folders will be created",
                         default=".",
                         required=False, type=str)
-    parser.add_argument('--fasta_file',
-                        help="Path to multi-fasta file from UniProt",
-                        required=True, type=str)
     args = parser.parse_args()
 
     variant_file = args.file
@@ -63,7 +66,7 @@ def get_gene_infos(list_geneorID, multi_fasta_file):
     return dict_ID, dict_gene, dict_fasta, dict_entry
 
 
-def create_input_files(dict_ID, dict_gene, dict_data, dict_fasta, dict_entry, input_folder, predictions_folder):
+def create_input_files(dict_ID, dict_gene, dict_data, dict_fasta, dict_entry, input_folder, predictions_folder, script_folder):
 
     # Creating ESM1v folders
     os.makedirs(f"{input_folder}/ESM1v/", exist_ok=True)
@@ -123,7 +126,7 @@ def create_input_files(dict_ID, dict_gene, dict_data, dict_fasta, dict_entry, in
             sequence = dict_fasta[gene]
 
             # put script path to args #####################################################
-            command_esm = f"python /home/wasabi/radjasan/these/benchmark/scripts/predict_ESM.py \
+            command_esm = f"python {script_folder}/predict_ESM.py \
                         --model-location esm1v_t33_650M_UR90S_1 esm1v_t33_650M_UR90S_2 esm1v_t33_650M_UR90S_3 esm1v_t33_650M_UR90S_4 esm1v_t33_650M_UR90S_5 \
                         --sequence {sequence} \
                         --dms-input  {os.path.abspath(output_esm)} \
@@ -183,6 +186,7 @@ if __name__ == "__main__":
     var_file = args.file
     output_folder = args.output_folder
     multi_fasta_file = args.fasta_file
+    script_folder = args.script_folder
     # Directory to create the 'input_files' folder
     input_folder = f"{output_folder}/input_files"
     predictions_folder = f"{output_folder}/predictions"
@@ -203,7 +207,7 @@ if __name__ == "__main__":
 
     list_geneorID = list(dict_data.keys())
     dict_ID, dict_gene, dict_fasta, dict_entry = get_gene_infos(list_geneorID, multi_fasta_file)
-    create_input_files(dict_ID, dict_gene, dict_data, dict_fasta, dict_entry, input_folder, predictions_folder)
+    create_input_files(dict_ID, dict_gene, dict_data, dict_fasta, dict_entry, input_folder, predictions_folder, script_folder)
 
 
     print(f"Input files created in {input_folder}")

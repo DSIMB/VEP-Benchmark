@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import pandas as pd
 import sys
 import os
@@ -7,6 +8,10 @@ import argparse
 
 
 def get_args():
+    """ 
+    Parsed command line arguments.
+    """
+
     parser = argparse.ArgumentParser(description='Generating input files needed to retrieve predictions from Variant Effect Predictors')
     parser.add_argument('-d', '--directory',
                         help="Path to file containing input_file and predictions folders",
@@ -20,7 +25,9 @@ def get_args():
     parser.add_argument('-m', '--mode',
                         help="Name of the final file",
                         required=True, type=str)
-
+    parser.add_argument('-I', '--intermediate_folder',
+                        help="Path to directory containing all dbNSFP files",
+                        required=True, type=str)
     args = parser.parse_args()
 
 
@@ -32,14 +39,11 @@ def get_args():
 
 def concat_id_data(tool_name, id_gene_data):
     print(tool_name)
-    file_data = f"{folder}/predictions/{tool_name}/{tool_name}_predictions.tsv"
+    file_data = f"{output_folder}/predictions/{tool_name}/{tool_name}_predictions.tsv"
     if not os.path.exists(file_data):
         print(file_data, "doesn't exists")
         return pd.DataFrame([])
-    if tool_name == "VARITY":
-        col = ["VARITY_R_score", "VARITY_ER_score", "VARITY_R_LOO_score", "VARITY_ER_LOO_score"]
-    else:
-        col = [f"{tool_name}_score"]
+    col = [f"{tool_name}_score"]
     data = pd.read_csv(file_data, sep="\t", names = ["ID", "Variation"] + col)
     data.ID = data.ID.astype(str)
     data_merged = pd.merge(id_gene_data, data, on = ["ID", "Variation"], how = "inner")    
@@ -49,11 +53,11 @@ def concat_id_data(tool_name, id_gene_data):
 
 def concat_gene_data(tool_name, CS_data):
     print(tool_name)
-    file_data = f"{folder}/predictions/{tool_name}/{tool_name}_predictions.tsv"
+    file_data = f"{output_folder}/predictions/{tool_name}/{tool_name}_predictions.tsv"
     if not os.path.exists(file_data):
-        print(file_data, "doesn't exists")
+        print(file_data, "doesn't exists or no predictions are available")
         return pd.DataFrame([])
-    if tool_name == "ESM":
+    if tool_name == "ESM1v":
         data = pd.read_csv(file_data, sep="\t",
                            names = ["Gene", "Variation", "model1","model2","model3","model4","model5"])
         data[f"ESM1v_score"] = data[["model1","model2","model3","model4","model5"]].mean(axis=1)
@@ -70,9 +74,9 @@ def concat_gene_data(tool_name, CS_data):
 
 
 
-def concat_genomic_data(tool_name, genomic_position):
+def concat_genomic_data(tool_name, genomic_position, output_folder):
     print(tool_name)
-    file_data = f"{folder}/predictions/{tool_name}/{tool_name}_predictions.tsv"
+    file_data = f"{output_folder}/predictions/{tool_name}/{tool_name}_predictions.tsv"
     if not os.path.exists(file_data):
         print(file_data, "doesn't exists")
         return pd.DataFrame([])
@@ -99,7 +103,8 @@ if __name__ == "__main__":
        
     args = get_args()
     
-    folder = args.directory
+    output_folder = args.directory
+    intermediate_folder = args.intermediate_folder
     CS_file = args.file
     dataname = args.name
     mode = args.mode
@@ -107,14 +112,16 @@ if __name__ == "__main__":
 
 
     # Variant data
-    gene_var_file = f"{folder}/input_files/gene_var_tab.txt"
-    gene_id_file = f"{folder}/input_files/id_vargene_tab.txt"
-    GR38_gene_var_file = f"{folder}/input_files/dbnsfp_genomic_position_GR38_gene_var.tsv"
-    GR37_gene_var_file = f"{folder}/input_files/dbnsfp_genomic_position_GR37_gene_var.tsv"
+    gene_var_file = f"{output_folder}/input_files/gene_var_tab.txt"
+    gene_id_file = f"{output_folder}/input_files/id_vargene_tab.txt"
+    GR38_gene_var_file = f"{output_folder}/input_files/dbnsfp_genomic_position_GR38_gene_var.tsv"
+    GR37_gene_var_file = f"{output_folder}/input_files/dbnsfp_genomic_position_GR37_gene_var.tsv"
+
+    header_file = f"{intermediate_folder}/final_header_modified.txt"
 
     gene_idvar_data = pd.read_csv(gene_id_file, sep="\t", names=["Gene", "ID", "Variation"])
-    GR38_gene_var_data = pd.read_csv(GR38_gene_var_file, delim_whitespace=True, names=["chr","pos","ref","alt","Gene","Variation"])
-    GR37_gene_var_data = pd.read_csv(GR37_gene_var_file, delim_whitespace=True, names=["chr","pos","ref","alt","Gene","Variation"])
+    GR38_gene_var_data = pd.read_csv(GR38_gene_var_file, sep='\s+', names=["chr","pos","ref","alt","Gene","Variation"])
+    GR37_gene_var_data = pd.read_csv(GR37_gene_var_file, sep='\s+', names=["chr","pos","ref","alt","Gene","Variation"])
 
 
     if mode == "ganno":
@@ -143,38 +150,36 @@ if __name__ == "__main__":
 
     
     # DBNSFP
-    dbNSFP = pd.read_csv(f"{folder}/predictions/dbNSFP/dbNSFP_output.tsv.cleaned", sep="\t")
-    header_file = "/dsimb/glaciere/radjasan/dbNSFP/academic/final_header_modified.txt"
+    dbNSFP = pd.read_csv(f"{output_folder}/predictions/dbNSFP/dbNSFP_output.tsv.cleaned", sep="\t")
     with open(header_file) as f:
         final_header = [line.strip() for line in f]
         
     db_col = ["Gene","Variation"] + final_header[9:]
     dbNSFP_final = dbNSFP[db_col]
-    dbNSFP_final = dbNSFP_final.drop(["VARITY_R_score", "VARITY_ER_score", "VARITY_R_LOO_score", "VARITY_ER_LOO_score"], axis=1)
     dbNSFP_final = pd.merge(gene_var_CS_data, dbNSFP_final, on = ["Gene", "Variation"], how = "left")
     perf_dict["dbNSFP"] = dbNSFP_final
     
     # ID VAR TOOLS
-    list_id_tool = ["AlphaMissense", "Envision", "SuSPect", "VARITY", "PONP2",
-                    "DeepSAV", "VESPA", "ESM1b"]
+    list_id_tool = ["Envision", "SuSPect", "PONP2",
+                    "DeepSAV", "VESPA"]
     for tool_name in list_id_tool:
         perf_dict[tool_name] = concat_id_data(tool_name, gene_idvar_data)
 
     
     # GENE VAR TOOLS
-    list_gene_tool = ["CPT", "EVE", "ESM"]
+    list_gene_tool = ["CPT", "ESM1v"]
     for tool_name in list_gene_tool:
         perf_dict[tool_name] = concat_gene_data(tool_name, gene_var_CS_data)
 
     # GENOMIC TOOLS
     dict_tool_name = {"MutFormer":GR37_gene_var_data,
-              "MISTIC":GR38_gene_var_data, "InMeRF":GR37_gene_var_data, "LASSIE":GR37_gene_var_data,
+              "MISTIC":GR38_gene_var_data, "InMeRF":GR38_gene_var_data, "LASSIE":GR37_gene_var_data,
               "CAPICE":GR37_gene_var_data, "SIGMA":GR38_gene_var_data, "MutScore":GR38_gene_var_data,
               "UNEECON":GR37_gene_var_data, "PhDSNP":GR38_gene_var_data}
         
         
     for tool_name in dict_tool_name:
-        perf_dict[tool_name] = concat_genomic_data(tool_name, dict_tool_name[tool_name])
+        perf_dict[tool_name] = concat_genomic_data(tool_name, dict_tool_name[tool_name], output_folder)
         
     concat_data = concat_perf_data(gene_var_CS_data, perf_dict)
-    concat_data.to_csv(f"{folder}/{dataname}_predictions.tsv", sep="\t", index=False)
+    concat_data.to_csv(f"{output_folder}/{dataname}_predictions.tsv", sep="\t", index=False)

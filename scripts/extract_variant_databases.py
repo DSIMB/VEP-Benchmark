@@ -44,13 +44,9 @@ def pattern_evecpt(file, database):
             res1 = variation[0]
             res2 = variation[-1]
             pos = variation[1:-1]
-            string_variation = f"{res1},{pos},{res2}"
             if entry not in dict_pattern:
                 dict_pattern[entry] = {}
-            if database == "EVE":
-                value_dict = string_variation
-            else:
-                value_dict = variation
+            value_dict = variation
             dict_pattern[entry][value_dict] = gene
     return dict_pattern
 
@@ -60,22 +56,16 @@ def read_evecpt(database, dict_search_pattern, database_directory, predictions_d
     if os.path.exists(output_file):
         os.remove(output_file)
     for entry in dict_search_pattern:
-        file_predictions = f"{database_directory}/{database}/{entry}.csv.gz"
+        file_predictions = f"{database_directory}/{database}/proteome/{entry}.csv.gz"
         if not os.path.exists(file_predictions):
             continue
         with gzip.open(file_predictions, "rt", encoding='utf-8') as db_file, open(output_file, "a") as fout:
             for line in db_file:
                 items = line.split(",")
-                if database == "EVE":
-                    variation = ",".join(items[:3])
-                else:
-                    variation = items[0]
+                variation = items[0]
                 if variation in dict_search_pattern[entry]:
                     gene = dict_search_pattern[entry][variation]
-                    if database == "EVE":
-                        new_line = f"{gene}\t{items[0]}{items[1]}{items[2]}\t{items[10]}\n"
-                    else:
-                        new_line = f"{gene}\t{items[0]}\t{items[1]}"
+                    new_line = f"{gene}\t{items[0]}\t{items[1]}"
                     fout.write(new_line)
 
 def read_vespa(id_var_file, database_file, predictions_directory):
@@ -133,36 +123,36 @@ def read_esm1b(id_var_file, database_directory, predictions_directory):
                     file_out.write(new_line)
 
 
-def read_idvar_databases(database, dict_search_pattern, database_file, predictions_directory):
-    start_time = time.time()
-    output_file = f"{predictions_directory}/{database}/{database}_predictions.tsv"
-    if "gz" in database_file:
-        mode = "rt"
-        open_fun = gzip.open
-    else:
-        mode= "r"
-        open_fun = open
+# def read_idvar_databases(database, dict_search_pattern, database_file, predictions_directory):
+#     start_time = time.time()
+#     output_file = f"{predictions_directory}/{database}/{database}_predictions.tsv"
+#     if "gz" in database_file:
+#         mode = "rt"
+#         open_fun = gzip.open
+#     else:
+#         mode= "r"
+#         open_fun = open
 
-    with open_fun(database_file, mode, encoding='utf-8') as db_file, open(output_file, "w") as fout:
-        for line in db_file:
-            if line.startswith("#") or line.startswith("UniProt"):
-                continue
-            items = line.split()
-            ID = items[0]
-            var = items[1]
-            if database in ["Envision", "DeepSAV"]:
-                score = items[-1]
-                string = f"{ID}_{var}"
-            elif database == "PONP2":
-                ID = items[-1]
-                var = items[2]
-                string = items[0]
-                score = items[3]
-            if string in dict_search_pattern and dict_search_pattern[string] == 0:
-                new_line = f"{ID}\t{var}\t{score}\n"
-                fout.write(new_line)
-                dict_search_pattern[string] = 1
-    print("TIME", database, time.time() - start_time)
+#     with open_fun(database_file, mode, encoding='utf-8') as db_file, open(output_file, "w") as fout:
+#         for line in db_file:
+#             if line.startswith("#") or line.startswith("UniProt"):
+#                 continue
+#             items = line.split()
+#             ID = items[0]
+#             var = items[1]
+#             if database in ["Envision", "DeepSAV"]:
+#                 score = items[-1]
+#                 string = f"{ID}_{var}"
+#             elif database == "PONP2":
+#                 ID = items[-1]
+#                 var = items[2]
+#                 string = items[0]
+#                 score = items[3]
+#             if string in dict_search_pattern and dict_search_pattern[string] == 0:
+#                 new_line = f"{ID}\t{var}\t{score}\n"
+#                 fout.write(new_line)
+#                 dict_search_pattern[string] = 1
+#     print("TIME", database, time.time() - start_time)
 
 
 def load_index(index_file):
@@ -172,7 +162,6 @@ def load_index(index_file):
     return index
 
 def read_idvar_databases(database, dict_search_pattern, database_file, predictions_directory):
-    start_time = time.time()
     output_file = f"{predictions_directory}/{database}/{database}_predictions.tsv"
     if "gz" in database_file:
         mode = "rt"
@@ -197,31 +186,20 @@ def read_idvar_databases(database, dict_search_pattern, database_file, predictio
                     items = line.split()
                     record_protein_id = items[0]
                     var = items[1]
-                    if database in ["Envision", "DeepSAV"]:
-                        record_variation = f"{record_protein_id}_{var}"
-                        score = items[-1]
-                    elif database == "PONP2":
-                        record_protein_id = items[-1]
-                        var = items[2]
-                        record_variation = items[0]
-                        score = items[3]
+                    record_variation = f"{record_protein_id}_{var}"
+                    score = items[-1]
                     if record_variation in dict_search_pattern and dict_search_pattern[record_variation] == 0:
                         new_line = f"{record_protein_id}\t{var}\t{score}\n"
                         fout.write(new_line)
                         dict_search_pattern[record_variation] = 1
                     elif record_protein_id != protein_id:
-                        # prot_done[protein_id] = 0
-                        print(record_protein_id, protein_id)
+                        prot_done[protein_id] = 0
                         break
-
-    print("TIME", database, time.time() - start_time)
 
 
 def read_genomics_databases(input_file, database, database_file, predictions_directory):
     output_file = f"{predictions_directory}/{database}/{database}_predictions.tsv"
-    
     tabix_file = pysam.TabixFile(database_file)
-
     with open(input_file, encoding='utf-8') as in_file, open(output_file, "w") as fout:
         for line in in_file:
             items = line.split()
@@ -236,20 +214,17 @@ def read_genomics_databases(input_file, database, database_file, predictions_dir
                 nuc2_record = items_record[3]
                 if nuc1 == nuc1_record and nuc2 == nuc2_record:
                     if database == "SIGMA":
-                        new_line = f"{chrom_record}\t{pos_record}\t{nuc1_record}\t{nuc2_record}\t{items_record[-2]}\n"
-                    elif database == "AlphaMissense":
-                        uniprot_id = items_record[5]
-                        variation = items_record[7]
-                        AM_score = items_record[8]
-                        new_line = f"{uniprot_id}\t{variation}\t{AM_score}\n"
+                        score = items_record[-2]
+                    elif database == "InMeRF":
+                        score = items_record[-1]
                     else:
-                        new_line = f"{chrom_record}\t{pos_record}\t{nuc1_record}\t{nuc2_record}\t{items_record[4]}\n"
+                        score = items_record[4]
+                    new_line = f"{chrom_record}\t{pos_record}\t{nuc1_record}\t{nuc2_record}\t{score}\n"
                     fout.write(new_line)
 
 
 def run_one_db(predictions_directory, database, dict_databases, database_directory):
     os.makedirs(f"{predictions_directory}/{database}", exist_ok=True)
-        
     input_file, database_file = dict_databases[database]
     if database_file:
         if not os.path.exists(database_file):
@@ -282,9 +257,9 @@ if __name__ == "__main__":
     VESPA_data =  f"{database_directory}/VESPA/vespal_human_proteome.h5"
     CPT_data = f"{database_directory}/CPT/proteome/"
     EVE_data = f"{database_directory}/EVE/variant_files/"
-    Envision_data = f"{database_directory}/Envision/Envision_clean.tsv"
+    Envision_data = f"{database_directory}/Envision/Envision_clean.tsv.gz"
     DeepSAV_data =  f"{database_directory}/DeepSAV/humanSAV_light.txt.gz"
-    PONP2_data =  f"{database_directory}/PONP2/ponp_predicion_combined_2.txt.gz"
+    PONP2_data =  f"{database_directory}/PONP2/ponp2_clean.tsv.gz"
     AM_data = f"{database_directory}/AlphaMissense/AlphaMissense_hg38.tsv.gz"
     MutScore_data =  f"{database_directory}/MutScore/mutscore-v1.0-hg38_sorted.tsv.gz"
     SIGMA_data =  f"{database_directory}/SIGMA/sigma_scores_sorted.txt.gz"
@@ -307,14 +282,11 @@ if __name__ == "__main__":
 
 
     dict_databases = {
-                      "ESM1b":[id_var_tab_input, None],
                       "VESPA":[id_var_tab_input, VESPA_data],
-                      "EVE":[uniprot_entry_input, EVE_data],
                       "CPT":[uniprot_entry_input, CPT_data],
                       "Envision":[id_var_under_input, Envision_data],
                       "DeepSAV":[id_var_under_input, DeepSAV_data],
                       "PONP2":[id_var_under_input, PONP2_data],
-                    #   "AlphaMissense":[GR38_positions_input, AM_data], 
                       "MutScore":[GR38_positions_input, MutScore_data],
                       "SIGMA":[GR38_positions_input, SIGMA_data],
                       "LASSIE":[GR37_positions_input, LASSIE_data],

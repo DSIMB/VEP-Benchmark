@@ -25,6 +25,8 @@ def create_protein_index(data_file, index_file, index_protein_id):
     with func_open(data_file, mode) as f, open(index_file, 'w') as idx:
         current_position = 0
         for line in f:
+            if line.startswith("#"):
+                continue
             items = line.split()
             protein_id = items[index_protein_id]
             if protein_id not in done:
