@@ -3,6 +3,9 @@ channels:
   - conda-forge
   - defaults
   - bioconda
+  - pytorch
+  - nvidia
+  - anaconda
 dependencies:
   - python=3.9
   - joblib=1.4.2
@@ -11,9 +14,14 @@ dependencies:
   - numpy=1.26.4
   - pip=24.0
   - samtools=1.13
+  - pytorch=2.0
+  - pytorch-cuda=11.8
+  - cudatoolkit=11.8
+  - tqdm=4.65
+  - biopython=1.84
   - pip:
-      - fair-esm
+      - fair-esm==2.0.0
       - pysam==0.22.1
-      # - transvar
-      # - bgzip
+      - transvar==2.5.10.20211024
+      - bgzip
 
