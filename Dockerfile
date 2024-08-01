@@ -20,22 +20,23 @@ RUN apt-get update && apt-get install -y \
     cpanminus \
     && apt-get clean
     
-# Set the working directory in the container
+WORKDIR /BenchVEP
+ENV PATH="/opt/conda/bin:$PATH"
+ENV CONDA_PREFIX="/opt/conda"
 
 # # Copy the dependencies file to the working directory
 
 SHELL ["/bin/bash", "--login", "-c"]
 
+RUN echo "yes" | cpan DBI
+RUN echo "yes" | cpan DBD::SQLite
+
 COPY envs envs
 # # Install dependencies using Conda
 RUN conda env create -f envs/environment.yml
 
-ENV PATH="/opt/conda/bin:$PATH"
-ENV CONDA_PREFIX="/opt/conda"
-
-# version pip
-WORKDIR /BenchVEP
-RUN pip install transvar bgzip
+# PhDSNP conda
+RUN conda create -n phdsnp python=2 scipy
 
 RUN echo $'#!/bin/bash\n\
 USER_ID=${LOCAL_UID:-9001}\n\
@@ -44,7 +45,6 @@ useradd -u $USER_ID -o -m user\n\
 groupmod -g $GROUP_ID user\n\
 /data/scripts/all_pipeline_light.sh "$@"' > entrypoint.sh && chmod +x entrypoint.sh
 
-RUN mkdir /data
 ENTRYPOINT ["conda", "run", "-n", "VEP", "--no-capture-output",  "/BenchVEP/entrypoint.sh" ]
 
 
