@@ -67,23 +67,33 @@ if [ "$mode" == "ganno" ]; then
     fi
 fi
 
+
+if [ ! -f "$variant_file" ]; then
+    echo "Variant file "$variant_file" does not exists. Please provide an existing one."
+    if [ "$docker_flag" = true ]; then
+        echo "(i) If the variant file is in the current directory (the github folder), please add '/data/' before the name of the file."
+        echo "Example: -f example/clinvar.tsv --> -f /data/example/clinvar.tsv\n"
+        echo "(ii) If the file is outside the current directory, add the following to the docker run command:"
+        echo "Example: -f /path/to/external_folder/clinvar.tsv --> -v /path/to/external_folder/:/ext_data -f /ext_data/clinvar.tsv"
+    fi
+    exit 1
+fi
 path_data="."; [ "$docker_flag" = true ] && path_data="/data" 
 
 # Variables #
-variant_file="$path_data/$variant_file"
 output_folder="$path_data/$output_name"
 script_folder="$path_data/scripts/"
 database_folder="$path_data/variant_databases/"
-multi_fasta_file="$path_data/uniprot/uniprot_28_2A_29_2-2023.03.28-13.08.10.56.fasta"
+multi_fasta_file="$path_data/uniprot/uniprotkb_2024_07_31.fasta"
 input_folder="$output_folder/input_files/"
 predictions_folder="$output_folder/predictions/"
-phdsnp_folder="$script_folder/PhDSNP/PhD-SNPg/"
+phdsnp_folder="$script_folder/phdsnp/"
 suspect_folder="$script_folder/SuSPect/suspect_package/"
 dbnsfp_folder="$predictions_folder/dbNSFP"
 dbnsfp_output="$dbnsfp_folder/dbNSFP_output.tsv"
 dbNSFP_data_folder="$database_folder/dbNSFP/"
 # Create necessary directories
-echo "[INFO] Creating $input_folder"
+echo "[INFO] All output files will be generated in the '$output_name' folder"
 mkdir -p $input_folder
 mkdir -p $predictions_folder
 
@@ -111,7 +121,9 @@ if [ "$mode" == "panno" ]; then
     echo "[INFO] Generating input files: genevar, idvar, geneseq, ESM, VariPred"
     python $script_folder/generate_input.py -f $variant_file \
                                             -o $output_folder  \
+                                            -s $script_folder \
                                             --fasta_file $multi_fasta_file
+
     echo "[INFO] Input files Time taken: ${SECONDS} seconds" >> $variant_file.log
 
 
@@ -136,7 +148,9 @@ elif [ "$mode" == "ganno" ]; then
     echo "[INFO] Generating input files: genevar, idvar, geneseq, ESM, VariPred"
     python $script_folder/generate_input.py -f $input_folder/gene_var_tab_from_transvar.tsv \
                                             -o $output_folder \
-                                            --fasta_file --fasta_file $multi_fasta_file
+                                            -s $script_folder \
+                                            --fasta_file $multi_fasta_file
+
     echo "[INFO] Input files Time taken: ${SECONDS} seconds" >> $variant_file.log
 
 else
@@ -163,11 +177,11 @@ python $script_folder/dbNSFP/extract_dbnsfp.py -f $input_folder/genomic_position
 cat $dbnsfp_output.chr* > $dbnsfp_output
 rm $dbnsfp_output.chr*
 python  $script_folder/dbNSFP/clean_dbnsfp_data.py -f $variant_file \
-                                                   -int $script_folder/intermediate_files \
-                                                   -df $dbnsfp_output \
-                                                   -inp $input_folder \
+                                                   -I $script_folder/intermediate_files \
+                                                   -d $dbnsfp_output \
+                                                   -i $input_folder \
                                                    -o $dbnsfp_output.cleaned \
-                                                   --fasta_file $multi_fasta_file
+                                                   -m $multi_fasta_file
                                                    
 
 
@@ -184,17 +198,6 @@ echo "[INFO] VEP Time taken: ${SECONDS} seconds" >> $variant_file.log
 
 # # Web servers #
 
-SECONDS=0
-
-# # # PhDSNP
-# mkdir -p $predictions_folder/PhDSNP/
-# python2 $phdsnp_folder/predict_variants.py $input_folder/genomic_position_GR38_postrand.tsv \
-#         -g 38  | sort | uniq | awk 'NR > 1 {print $1"\t"$2"\t"$3"\t"$4"\t"$7}' > $predictions_folder/PhDSNP/PhDSNP_predictions.tsv
-# echo "[INFO] PHD Time taken: ${SECONDS} seconds" >> $variant_file.log
-
-
-# docker run -v /home/your_home:/home/your_home  phd-snpg:full] \
-#                 /home/bass/PhD-SNPg/predict_variants.py /home/bass/PhD-SNPg/test/test_short_variants_hg19.tsv -g hg19
 
                 
 # # # # SuSPect
@@ -203,21 +206,59 @@ SECONDS=0
 # echo S[INFO] uSPect
 #ls -lahrt /BenchVEP/scripts/
 #ls -lahrt /BenchVEP
-mkdir -p $predictions_folder/SuSPect/
-perl $script_folder/suspect/suspect_package/suspect.pl --input $input_folder/id_var_tab.txt --output $predictions_folder/SuSPect/SuSPect_predictions_tmp.tsvaa
 
-awk  -F "\t" '{print $1"\t"$2"\t"$6}' $predictions_folder/SuSPect/SuSPect_predictions_tmp.tsvaa > $predictions_folder/SuSPect/SuSPect_predictions.tsv
+mkdir -p $predictions_folder/SuSPect/
+
+if [ -f "$predictions_folder/SuSPect/SuSPect_predictions_tmp.tsv" ]; then
+    rm $predictions_folder/SuSPect/SuSPect_predictions_tmp.tsv
+fi
+
+perl $script_folder/suspect/suspect_package/suspect.pl --input $input_folder/id_var_tab.txt --output $predictions_folder/SuSPect/SuSPect_predictions_tmp.tsv
+
+awk  -F "\t" '{print $1"\t"$2"\t"$6}' $predictions_folder/SuSPect/SuSPect_predictions_tmp.tsv > $predictions_folder/SuSPect/SuSPect_predictions.tsv
 rm $predictions_folder/SuSPect/SuSPect_predictions_tmp.tsv
 echo "[INFO] SuSPECT Time taken: ${SECONDS} seconds" >> $variant_file.log
 
-# # GPU predictions #
-
-# # ESM
-# #bash $predictions_folder/ESM/run_esm.sh
-# #bash $script_folder/cleaner/clean_ESM.sh . 
 
 # # Concatenate all predictions
+SECONDS=0
 
-# python $script_folder/concat_predictions.py -d . -f $variant_file -m $mode -n $output_name
+python $script_folder/concat_predictions.py -d $output_folder \
+                                            -f $variant_file \
+                                            -m $mode \
+                                            -n $output_name \
+                                            -I $script_folder/intermediate_files
 
-# echo "[INFO] Done"
+# python $script_folder/compute_labels.py
+
+echo "[INFO] Concatenation Time taken: ${SECONDS} seconds" >> $variant_file.log
+
+if [ "$esm" = true ]; then
+    # GPU predictions #
+    echo "\n[INFO] ESM1v runs are quite long."
+    echo "[INFO] All extracted variants so far are already in '$output_name/${output_name}_predictions.tsv' file if you want them before finishing ESM1v runs"
+    # ESM
+    bash $predictions_folder/ESM/run_esm.sh
+    bash $script_folder/cleaner/clean_ESM.sh $predictions_folder
+fi
+SECONDS=0
+
+# # # PhDSNP
+#mkdir -p $predictions_folder/PhDSNP/
+#eval "$(conda shell.bash hook)"
+#conda activate phdsnp
+#python2 $phdsnp_folder/predict_variants.py $input_folder/dbnsfp_genomic_position_GR38.tsv  \
+#        -g 38  | sort | uniq | awk 'NR > 1 {print $1"\t"$2"\t"$3"\t"$4"\t"$7}' > $predictions_folder/PhDSNP/PhDSNP_predictions.tsv
+#echo "[INFO] PHD Time taken: ${SECONDS} seconds" >> $variant_file.log
+
+
+# python $script_folder/concat_predictions.py -d $output_folder \
+#                                             -f $variant_file \
+#                                             -m $mode \
+#                                             -n $output_name \
+#                                             -I $script_folder/intermediate_files
+
+# python $script_folder/compute_labels.py
+
+echo "\n[INFO] Variant extraction done. Find all generated files in the '$output_name' folder"
+echo "[INFO] All predictions are in the '$output_name/${output_name}_predictions.tsv' file"
