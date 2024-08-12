@@ -10,7 +10,7 @@ mkdir -p $transvar_folder
 
 
 # ZENODO database file
-wget "https://zenodo.org/records/12804838/files/variant_databases.zip?download=1"
+wget "https://zenodo.org/records/12804838/files/variant_databases.zip?download=1" -O variant_databases.zip
 unzip variant_databases.zip
 
 
