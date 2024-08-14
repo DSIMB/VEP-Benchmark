@@ -54,6 +54,7 @@ Changed options are `-v external_folder:/ext vep -f /ext/time_check/clinvar_10.t
 Usage of the pipeline script is described below. 
 
 #### Conda Environments
+If you are not using Docker, you have to set up conda environments.
 
 Two Conda environments are required:
 1. **Main Environment**: Set up using the `environment.yml` file:
