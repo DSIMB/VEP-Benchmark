@@ -23,6 +23,31 @@ bash scripts/download_databases.sh
 - Approximately X GB of disk space is needed for the download of databases.
 - Some databases support indexing (database with genomic position), this is handled within the script. This index will speed up the retrieving of predictions.
 
+#### Docker
+If you are familiar with docker, you can use the docker image provided within this repo to download every necessary packages. To build the image, run:
+   
+```bash
+docker build -t vep . # vep is just the name of the image built, put whatever you want
+```
+
+Then, you can direcly run the pipeline script with this example command line (also present in the docker_run.sh script) :
+
+   
+```bash
+docker run --rm -it -e LOCAL_UID=$(id -u $USER) -e LOCAL_GID=$(id -g $USER) -v $(pwd):/data  vep -f /data/time_check/clinvar_10.tsv -m panno -g 38 -n clinvar_10_final -d
+```
+
+Be aware to use the `-d` option, indicating that the main script is running through a docker image. 
+
+If your variant file is in the same folder as the repo (in the `$(pwd)`, please add `/data/` before the path of the variant file, since the repo will be mounted in the docker image. If the file is not in the repo, you need to use the following command line : 
+
+```bash
+docker run --rm -it -e LOCAL_UID=$(id -u $USER) -e LOCAL_GID=$(id -g $USER) -v $(pwd):/data -v external_folder:/ext vep -f /ext/time_check/clinvar_10.tsv -m panno -g 38 -n clinvar_10_final -d
+```
+Changed options are `-v external_folder:/ext vep -f /ext/time_check/clinvar_10.tsv`, which create another mount within the docker image corresponding to the folder containing the variant file. 
+
+Usage of the pipeline script is described below. 
+
 #### Conda Environments
 
 Two Conda environments are required:
@@ -30,14 +55,12 @@ Two Conda environments are required:
    
 ```bash
 conda env create -f envs/environment.yml
-conda activate VEP
 ```
 
 2. **Secondary Environment**: Use this environment specifically for retrieving predictions from PhD-SNPg, as it requires Python 2 compatibility:
    
 ```bash
-conda env create -f environment.yml
-conda activate VEP
+conda create -n phdsnp python=2 scipy
 ```
 
 ---
@@ -70,6 +93,7 @@ SDHB    S163P   Benign
 Then you want to use the **panno** (protein annotations) mode of the pipeline by running 
 
 ```bash
+conda activate VEP
 bash scripts/all_pipeline_light.sh -f variant_file.tsv -m panno -g 38
 ```
 * ganno mode
