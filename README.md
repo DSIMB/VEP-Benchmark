@@ -30,7 +30,7 @@ If you are familiar with docker, you can use the docker image provided within th
 docker build -t vep . # vep is just the name of the image built, put whatever you want
 ```
 
-Then, you can direcly run the pipeline script with this example command line (also present in the docker_run.sh script) :
+Then, you can direcly run the pipeline script with this example command line (also present in the docker_run.sh script). For example, if the variant file is in the `time_check` folder in this repo :
 
    
 ```bash
@@ -42,7 +42,7 @@ Be aware to use the `-d` option, indicating that the main script is running thro
 If your variant file is in the same folder as the repo (in the `$(pwd)`, please add `/data/` before the path of the variant file, since the repo will be mounted in the docker image. If the file is not in the repo, you need to use the following command line : 
 
 ```bash
-docker run --rm -it -e LOCAL_UID=$(id -u $USER) -e LOCAL_GID=$(id -g $USER) -v $(pwd):/data -v external_folder:/ext vep -f /ext/time_check/clinvar_10.tsv -m panno -g 38 -n clinvar_10_final -d
+docker run --rm -it -e LOCAL_UID=$(id -u $USER) -e LOCAL_GID=$(id -g $USER) -v $(pwd):/data -v /path/to/external_folder:/ext vep -f /ext/time_check/clinvar_10.tsv -m panno -g 38 -n clinvar_10_final -d
 ```
 Changed options are `-v external_folder:/ext vep -f /ext/time_check/clinvar_10.tsv`, which create another mount within the docker image corresponding to the folder containing the variant file. 
 
