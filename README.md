@@ -79,6 +79,9 @@ Tabix is used to create index files for large database of genomic positions, whi
 
 ### Usage
 
+Be aware that the first run of the pipeline script will be use to configure downloaded databases (the majority of them are already configured, those that are downloaded from our Zenodo repo).
+This configuration may take some time.
+
 * panno mode
   
 If your input file resembles the following format
