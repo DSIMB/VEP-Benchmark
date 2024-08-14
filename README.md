@@ -5,9 +5,11 @@ Here are scripts and data used for the paper Assessment of Variant Effect Predic
 ## Data
 All data generated for the benchmark are available in the `Data` folder. This folder comprises two folders:
 - difficulty
+  
 This folder contains variants classified either as Easy, Moderate or Hard according to their error_rate, we also provide solvent accessibility for each of them when available. 
 - predictions
-This folder contains 65 predictions scores for each dataset. There are the raw data and the processed ones. Data processing consisted in removing variant potentially biased for the evaluation. See Figure 1 of the paper.
+  
+This folder contains 65 predictions scores and predicted labels for each dataset. There are the raw data and the processed ones. Data processing consisted in removing variant potentially biased for the evaluation. See Figure 1 of the paper.
 
 ## Pipeline
 Provided pipeline allows you to retrieve 65 predictions from Variant Effect Predictors (VEPs) by using dbNSFP database, precomputed predictions or scripts provided by authors for concerned VEPs.
