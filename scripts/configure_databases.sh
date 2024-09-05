@@ -6,7 +6,7 @@ path_data=$1
 database_folder="$path_data/variant_databases"
 transvar_folder="$path_data/transvar"
 script_folder="$path_data/scripts"
-
+mkdir -p tmp
 
 # # Reference genome hg38
 echo "Configuring reference genome hg38..."
@@ -27,6 +27,7 @@ transvar config -k ensembl -v $(realpath $path_data/transvar/hg19/hg19.ensembl.g
 
 # # InMeRF (to index)
 echo "Configuring InMeRF database..."
+zcat $database_folder/InMeRF/InMeRF_score_hg38.txt.gz | sort -k1,1 -k2,2n -T tmp > $database_folder/InMeRF/InMeRF_score_hg38.txt
 bgzip -f $database_folder/InMeRF/InMeRF_score_hg38.txt
 tabix -p vcf -s 1 -b 2 -e 2 $database_folder/InMeRF/InMeRF_score_hg38.txt.gz
 
