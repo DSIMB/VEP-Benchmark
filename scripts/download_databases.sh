@@ -29,7 +29,6 @@ wget "https://zenodo.org/record/3928295/files/capice_v1.0_build37_snvs.tsv.gz.tb
 # InMeRF (to index) (Zenodo)
 mkdir -p $database_folder/InMeRF
 wget "https://www.med.nagoya-u.ac.jp/neurogenetics/InMeRF/download/InMeRF_score_hg38.txt.gz" -P $database_folder/InMeRF
-zcat $database_folder/InMeRF/InMeRF_score_hg38.txt.gz | sort -k1,1 -k2,2n > $database_folder/InMeRF/InMeRF_score_hg38.txt
 
 
 # Download SuSPect files
